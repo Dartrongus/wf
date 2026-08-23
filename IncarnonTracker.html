@@ -1,0 +1,433 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Трекер Инкарнон Адаптеров (Warframe)</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --card-bg: #1e1e1e;
+            --card-sub: #2a2a2a;
+            --accent: #00bcd4;
+            --accent-hover: #008ba3;
+            --warning: #ff9800;
+            --text-main: #e0e0e0;
+            --text-muted: #999;
+            --border: #333;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1300px;
+            margin: 0 auto;
+        }
+        h1 {
+            text-align: center;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        .subtitle {
+            text-align: center;
+            color: var(--text-muted);
+            margin-bottom: 30px;
+        }
+        .dashboard {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.4);
+        }
+        .dashboard h3 {
+            margin-top: 0;
+            color: var(--warning);
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 10px;
+        }
+        .res-totals-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .res-total-item {
+            background: var(--card-sub);
+            padding: 10px 15px;
+            border-radius: 6px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-left: 3px solid var(--accent);
+        }
+        .res-info-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        .res-icon {
+            width: 24px;
+            height: 24px;
+            object-fit: contain;
+        }
+        .res-name {
+            font-size: 0.95em;
+            color: var(--text-main);
+        }
+        .res-count {
+            font-weight: bold;
+            font-size: 1.1em;
+            color: var(--accent);
+        }
+        .category-section {
+            background: var(--card-bg);
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+        }
+        h2 {
+            color: var(--warning);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 8px;
+            margin-top: 0;
+        }
+        .adapter-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+            gap: 15px;
+            margin-top: 15px;
+        }
+        .adapter-card {
+            background: var(--card-sub);
+            border-left: 4px solid var(--accent);
+            padding: 15px;
+            border-radius: 6px;
+            transition: opacity 0.2s, border-color 0.2s;
+            position: relative;
+        }
+        .adapter-card.completed {
+            opacity: 0.5;
+            border-left-color: #555;
+        }
+        .adapter-content {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        .weapon-img {
+            width: 80px;
+            height: 80px;
+            object-fit: contain;
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+            padding: 4px;
+            flex-shrink: 0;
+        }
+        .adapter-details {
+            flex-grow: 1;
+        }
+        .adapter-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            padding-bottom: 6px;
+        }
+        .adapter-title {
+            font-weight: bold;
+            font-size: 1em;
+            color: #fff;
+        }
+        .checkbox-label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            font-size: 0.85em;
+            color: var(--accent);
+            user-select: none;
+        }
+        .checkbox-label input {
+            margin-right: 4px;
+            transform: scale(1.1);
+            cursor: pointer;
+        }
+        ul {
+            margin: 0;
+            padding-left: 0;
+            list-style: none;
+            font-size: 0.9em;
+            color: #b0b0b0;
+        }
+        li {
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .li-res-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .list-icon {
+            width: 18px;
+            height: 18px;
+            object-fit: contain;
+        }
+        .controls-bar {
+            text-align: right;
+            margin-bottom: 15px;
+        }
+        button {
+            background-color: var(--accent);
+            color: #121212;
+            border: none;
+            padding: 8px 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background-color: var(--accent-hover);
+            color: #fff;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Трекер Инкарнон Адаптеров</h1>
+    <div class="subtitle">Интерактивный трекер ресурсов для улучшений оружия</div>
+
+    <div class="dashboard">
+        <h3>Общие требования для выбранных (неустановленных) адаптеров</h3>
+        <div class="res-totals-grid" id="totalsContainer"></div>
+    </div>
+
+    <div class="controls-bar">
+        <button onclick="resetAll()">Сбросить все галочки</button>
+    </div>
+
+    <div id="categoriesContainer"></div>
+</div>
+
+<script>
+    /* =========================================================================
+       СПИСОК РЕСУРСОВ С ИКОНКАМИ 
+       ========================================================================= */
+    const RESOURCE_NAMES = {
+        pathos: { name: "Струбцина Пафоса", img: "https://wiki.warframe.com/images/PathosClamp.png" },
+        aggri: { name: "Аггри-Камень", img: "https://wiki.warframe.com/images/Aggristone.png" },
+        sagen: { name: "Жемчужина Саггена", img: "https://wiki.warframe.com/images/SaggenPearl.png" },
+        kovnik: { name: "Ковник", img: "https://wiki.warframe.com/images/Kovnik.png" },
+        lament: { name: "Ламентус", img: "https://wiki.warframe.com/images/Lamentus.png" },
+        konla: { name: "Росток Конлы", img: "https://wiki.warframe.com/images/ConnlaSprout.png" },
+        evani: { name: "Эвани", img: "https://wiki.warframe.com/images/Eevani.png" },
+        drakroot: { name: "Дракорень", img: "https://wiki.warframe.com/images/Dracroot.png" },
+        yao: { name: "Куст Яо", img: "https://wiki.warframe.com/images/YaoShrub.png" },
+        yumag: { name: "Юмаг", img: "https://wiki.warframe.com/images/Ueymag.png" },
+        sylphs: { name: "Сильфсела", img: "https://wiki.warframe.com/images/Silphsela.png" },
+        tasoma: { name: "Экстракт Тасомы", img: "https://wiki.warframe.com/images/TasomaExtract.png" },
+        ariet: { name: "Ариетовая Чешуя", img: "https://wiki.warframe.com/images/ArietteScale.png" },
+        goldfang: { name: "Клык Золотой Пасти", img: "https://wiki.warframe.com/images/MawFang.png" },
+        pebble: { name: "Перламутровая Галька", img: "https://wiki.warframe.com/images/NacreousPebble.png" },
+        rune: { name: "Руническая Сущность", img: "https://wiki.warframe.com/images/RuneMarrow.png" }
+    };
+
+    // Оружие (добавлено поле img для картинки самого оружия)
+    const categoriesData = [
+        {
+            categoryTitle: "Основное",
+            adapters: [
+                { id: "braton", name: "Генезис Инкарнона: Брэйтон", img: "https://wiki.warframe.com/images/BratonIncarnon.png", costs: { pathos: 20, rune: 60, tasoma: 60 } },
+                { id: "boltor", name: "Генезис Инкарнона: Болтор", img: "https://wiki.warframe.com/images/BoltorIncarnon.png", costs: { pathos: 20, rune: 60, sylphs: 60 } },
+                { id: "burston", name: "Генезис Инкарнона: Бёрстон", img: "https://wiki.warframe.com/images/BurstonIncarnon.png", costs: { pathos: 20, rune: 60, goldfang: 20 } },
+                { id: "vectis", name: "Генезис Инкарнона: Вектис", img: "https://wiki.warframe.com/images/VectisIncarnon.png", costs: { pathos: 20, evani: 80, sagen: 150 } },
+                { id: "boar", name: "Генезис Инкарнона: Вепрь", img: "https://wiki.warframe.com/images/BoarIncarnon.png", costs: { pathos: 20, rune: 60, tasoma: 60 } },
+                { id: "gorgon", name: "Генезис Инкарнона: Горгона", img: "https://wiki.warframe.com/images/GorgonIncarnon.png", costs: { pathos: 20, rune: 60, tasoma: 60 } },
+                { id: "dera", name: "Генезис Инкарнона: Дера", img: "https://wiki.warframe.com/images/DeraIncarnon.png", costs: { pathos: 20, evani: 80, yumag: 70 } },
+                { id: "latron", name: "Генезис Инкарнона: Латрон", img: "https://wiki.warframe.com/images/LatronIncarnon.png", costs: { pathos: 20, rune: 60, goldfang: 20 } },
+                { id: "miter", name: "Генезис Инкарнона: Митра", img: "https://wiki.warframe.com/images/MiterIncarnon.png", costs: { pathos: 20, rune: 60, tasoma: 60 } },
+                { id: "paris", name: "Генезис Инкарнона: Парис", img: "https://wiki.warframe.com/images/ParisIncarnon.png", costs: { pathos: 20, rune: 60, sylphs: 60 } },
+                { id: "strun", name: "Генезис Инкарнона: Стран", img: "https://wiki.warframe.com/images/StrunIncarnon.png", costs: { pathos: 20, rune: 60, tasoma: 60 } },
+                { id: "sybaris", name: "Генезис Инкарнона: Сибарис", img: "https://wiki.warframe.com/images/SybarisIncarnon.png", costs: { pathos: 20, yumag: 70, sagen: 150 } },
+                { id: "soma", name: "Генезис Инкарнона: Сома", img: "https://wiki.warframe.com/images/SomaIncarnon.png", costs: { pathos: 20, rune: 60, sylphs: 60 } },
+                { id: "dread", name: "Генезис Инкарнона: Страх", img: "https://wiki.warframe.com/images/DreadIncarnon.png", costs: { pathos: 20, rune: 60, tasoma: 60 } },
+                { id: "torid", name: "Генезис Инкарнона: Торид", img: "https://wiki.warframe.com/images/ToridIncarnon.png", costs: { pathos: 20, rune: 60, goldfang: 20 } }
+            ]
+        },
+        {
+            categoryTitle: "Вторичное",
+            adapters: [
+                { id: "atomos", name: "Генезис Инкарнона: Атомос", img: "https://wiki.warframe.com/images/AtomosIncarnon.png", costs: { pathos: 20, yao: 70, lament: 80 } },
+                { id: "angstrum", name: "Генезис Инкарнона: Ангстрем", img: "https://wiki.warframe.com/images/AngstrumIncarnon.png", costs: { pathos: 20, yumag: 70, lament: 80 } },
+                { id: "bronco", name: "Генезис Инкарнона: Бронко", img: "https://wiki.warframe.com/images/BroncoIncarnon.png", costs: { pathos: 20, yao: 70, pebble: 100 } },
+                { id: "ballistica", name: "Генезис Инкарнона: Баллистика", img: "https://wiki.warframe.com/images/BallisticaIncarnon.png", costs: { pathos: 20, kovnik: 80, sylphs: 60 } },
+                { id: "vasto", name: "Генезис Инкарнона: Васто", img: "https://wiki.warframe.com/images/VastoIncarnon.png", costs: { pathos: 20, yao: 70, lament: 80 } },
+                { id: "gammacor", name: "Генезис Инкарнона: Гаммакор", img: "https://wiki.warframe.com/images/GammacorIncarnon.png", costs: { pathos: 20, yumag: 70, lament: 80 } },
+                { id: "zylok", name: "Генезис Инкарнона: Зайлок", img: "https://wiki.warframe.com/images/ZylokIncarnon.png", costs: { pathos: 20, yao: 70, pebble: 100 } },
+                { id: "kunai", name: "Генезис Инкарнона: Кунаи", img: "https://wiki.warframe.com/images/KunaiIncarnon.png", costs: { pathos: 20, yao: 70, evani: 80 } },
+                { id: "lex", name: "Генезис Инкарнона: Лекс", img: "https://wiki.warframe.com/images/LexIncarnon.png", costs: { pathos: 20, yao: 70, sagen: 150 } },
+                { id: "lato", name: "Генезис Инкарнона: Лато", img: "https://wiki.warframe.com/images/LatoIncarnon.png", costs: { pathos: 20, yao: 70, pebble: 100 } },
+                { id: "despair", name: "Генезис Инкарнона: Отчаяние", img: "https://wiki.warframe.com/images/DespairIncarnon.png", costs: { pathos: 20, sylphs: 60, yao: 70 } },
+                { id: "toxocyst", name: "Генезис Инкарнона: Парные Токсоцисты", img: "https://wiki.warframe.com/images/DualToxocystIncarnon.png", costs: { pathos: 20, yao: 70, evani: 80 } },
+                { id: "sicarus", name: "Генезис Инкарнона: Сикарус", img: "https://wiki.warframe.com/images/SicarusIncarnon.png", costs: { pathos: 20, pebble: 100, aggri: 150 } },
+                { id: "stug", name: "Генезис Инкарнона: Стаг", img: "https://wiki.warframe.com/images/StugIncarnon.png", costs: { pathos: 20, aggri: 150, tasoma: 60 } },
+                { id: "furis", name: "Генезис Инкарнона: Фурис", img: "https://wiki.warframe.com/images/FurisIncarnon.png", costs: { pathos: 20, yao: 70, lament: 80 } },
+                { id: "cestra", name: "Генезис Инкарнона: Цестра", img: "https://wiki.warframe.com/images/CestraIncarnon.png", costs: { pathos: 20, sagen: 70, kovnik: 80 } }
+            ]
+        },
+        {
+            categoryTitle: "Ближний Бой",
+            adapters: [
+                { id: "anku", name: "Генезис Инкарнона: Анку", img: "https://wiki.warframe.com/images/AnkuIncarnon.png", costs: { pathos: 20, yumag: 70, ariet: 300 } },
+                { id: "ack_brunt", name: "Генезис Инкарнона: Ак и Брант", img: "https://wiki.warframe.com/images/Ack%26BruntIncarnon.png", costs: { pathos: 20, drakroot: 70, ariet: 300 } },
+                { id: "bo", name: "Генезис Инкарнона: Бо", img: "https://wiki.warframe.com/images/BoIncarnon.png", costs: { pathos: 20, drakroot: 70, kovnik: 80 } },
+                { id: "destreza", name: "Генезис Инкарнона: Дестреза", img: "https://wiki.warframe.com/images/DestrezaIncarnon.png", costs: { pathos: 20, drakroot: 70, rune: 60 } },
+                { id: "ceramic_dagger", name: "Генезис Инкарнона: Керамический Кинжал", img: "https://wiki.warframe.com/images/CeramicDaggerIncarnon.png", costs: { pathos: 20, drakroot: 70, konla: 80 } },
+                { id: "magister", name: "Генезис Инкарнона: Магистр", img: "https://wiki.warframe.com/images/MagistarIncarnon.png", costs: { pathos: 20, drakroot: 70, aggri: 150 } },
+                { id: "hate", name: "Генезис Инкарнона: Ненависть", img: "https://wiki.warframe.com/images/HateIncarnon.png", costs: { pathos: 20, drakroot: 70, goldfang: 20 } },
+                { id: "nami_solo", name: "Генезис Инкарнона: Нами Соло", img: "https://wiki.warframe.com/images/NamiSoloIncarnon.png", costs: { pathos: 20, drakroot: 70, aggri: 150 } },
+                { id: "okina", name: "Генезис Инкарнона: Окина", img: "https://wiki.warframe.com/images/OkinaIncarnon.png", costs: { pathos: 20, goldfang: 20, lament: 80 } },
+                { id: "obex", name: "Генезис Инкарнона: Обекс", img: "https://wiki.warframe.com/images/ObexIncarnon.png", costs: { pathos: 20, pebble: 100, lament: 80 } },
+                { id: "dual_ichor", name: "Генезис Инкарнона: Парные Ихоры", img: "https://wiki.warframe.com/images/DualIchorIncarnon.png", costs: { pathos: 20, rune: 60, kovnik: 80 } },
+                { id: "skana", name: "Генезис Инкарнона: Скана", img: "https://wiki.warframe.com/images/SkanaIncarnon.png", costs: { pathos: 20, drakroot: 70, konla: 80 } },
+                { id: "sibear", name: "Генезис Инкарнона: Сибирь", img: "https://wiki.warframe.com/images/SibearIncarnon.png", costs: { pathos: 20, drakroot: 70, konla: 80 } },
+                { id: "furax", name: "Генезис Инкарнона: Фуракс", img: "https://wiki.warframe.com/images/FuraxIncarnon.png", costs: { pathos: 20, drakroot: 70, ariet: 300 } }
+            ]
+        }
+    ];
+
+    function renderApp() {
+        const container = document.getElementById('categoriesContainer');
+        container.innerHTML = '';
+
+        categoriesData.forEach(cat => {
+            const section = document.createElement('div');
+            section.className = 'category-section';
+            
+            let gridHtml = `<div class="adapter-grid">`;
+            cat.adapters.forEach(adapter => {
+                const isChecked = localStorage.getItem('incarnon_' + adapter.id) === 'true';
+                
+                let costsList = '';
+                for (let [resKey, amount] of Object.entries(adapter.costs)) {
+                    const res = RESOURCE_NAMES[resKey] || { name: resKey, img: '' };
+                    costsList += `
+                        <li>
+                            <div class="li-res-left">
+                                <img src="${res.img}" class="list-icon" alt="">
+                                <span>${res.name}:</span>
+                            </div>
+                            <strong>${amount.toLocaleString()}</strong>
+                        </li>`;
+                }
+
+                gridHtml += `
+                    <div class="adapter-card ${isChecked ? 'completed' : ''}" id="card_${adapter.id}">
+                        <div class="adapter-content">
+                            <img src="${adapter.img}" class="weapon-img" alt="">
+                            <div class="adapter-details">
+                                <div class="adapter-header">
+                                    <span class="adapter-title">${adapter.name}</span>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleAdapter('${adapter.id}')"> Установлен
+                                    </label>
+                                </div>
+                                <ul>
+                                    ${costsList}
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            });
+            gridHtml += `</div>`;
+
+            section.innerHTML = `<h2>${cat.categoryTitle}</h2>` + gridHtml;
+            container.appendChild(section);
+        });
+
+        updateTotals();
+    }
+
+    function toggleAdapter(id) {
+        const checkbox = document.querySelector(`#card_${id} input[type="checkbox"]`);
+        const card = document.getElementById(`card_${id}`);
+        
+        if (checkbox.checked) {
+            localStorage.setItem('incarnon_' + id, 'true');
+            card.classList.add('completed');
+        } else {
+            localStorage.setItem('incarnon_' + id, 'false');
+            card.classList.remove('completed');
+        }
+        updateTotals();
+    }
+
+    function resetAll() {
+        categoriesData.forEach(cat => {
+            cat.adapters.forEach(adapter => {
+                localStorage.setItem('incarnon_' + adapter.id, 'false');
+            });
+        });
+        renderApp();
+    }
+
+    function updateTotals() {
+        const totals = {};
+        
+        Object.keys(RESOURCE_NAMES).forEach(key => {
+            totals[key] = 0;
+        });
+
+        categoriesData.forEach(cat => {
+            cat.adapters.forEach(adapter => {
+                const isChecked = localStorage.getItem('incarnon_' + adapter.id) === 'true';
+                if (!isChecked) {
+                    for (let [resKey, amount] of Object.entries(adapter.costs)) {
+                        if (totals[resKey] !== undefined) {
+                            totals[resKey] += amount;
+                        } else {
+                            totals[resKey] = (totals[resKey] || 0) + amount;
+                        }
+                    }
+                }
+            });
+        });
+
+        const totalsContainer = document.getElementById('totalsContainer');
+        totalsContainer.innerHTML = '';
+
+        for (let [resKey, totalAmount] of Object.entries(totals)) {
+            if (totalAmount > 0) {
+                const res = RESOURCE_NAMES[resKey] || { name: resKey, img: '' };
+                const item = document.createElement('div');
+                item.className = 'res-total-item';
+                item.innerHTML = `
+                    <div class="res-info-wrapper">
+                        <img src="${res.img}" class="res-icon" alt="">
+                        <span class="res-name">${res.name}</span>
+                    </div>
+                    <span class="res-count">${totalAmount.toLocaleString()}</span>
+                `;
+                totalsContainer.appendChild(item);
+            }
+        }
+    }
+
+    window.onload = renderApp;
+</script>
+
+</body>
+</html>

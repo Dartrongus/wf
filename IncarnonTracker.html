@@ -187,6 +187,9 @@
         .controls-bar {
             text-align: right;
             margin-bottom: 15px;
+            display: flex;
+            gap: 10px;
+            justify-content: flex-end;
         }
         button {
             background-color: var(--accent);
@@ -202,6 +205,20 @@
             background-color: var(--accent-hover);
             color: #fff;
         }
+        .btn-export {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-export:hover {
+            background-color: #388E3C;
+        }
+        .btn-import {
+            background-color: #2196F3;
+            color: white;
+        }
+        .btn-import:hover {
+            background-color: #1976D2;
+        }
     </style>
 </head>
 <body>
@@ -216,6 +233,8 @@
     </div>
 
     <div class="controls-bar">
+        <button class="btn-export" onclick="exportData()">Экспорт кода</button>
+        <button class="btn-import" onclick="importData()">Импорт кода</button>
         <button onclick="resetAll()">Сбросить все галочки</button>
     </div>
 
@@ -308,6 +327,65 @@
             ]
         }
     ];
+
+    function getAllAdapterIds() {
+        let ids = [];
+        categoriesData.forEach(cat => {
+            cat.adapters.forEach(adapter => {
+                ids.push(adapter.id);
+            });
+        });
+        return ids;
+    }
+
+    function exportData() {
+        const ids = getAllAdapterIds();
+        let binaryString = "";
+        
+        ids.forEach(id => {
+            const isChecked = localStorage.getItem('incarnon_' + id) === 'true';
+            binaryString += isChecked ? "1" : "0";
+        });
+
+        let hexString = "";
+        for (let i = 0; i < binaryString.length; i += 4) {
+            let chunk = binaryString.substr(i, 4).padEnd(4, "0");
+            hexString += parseInt(chunk, 2).toString(16);
+        }
+
+        navigator.clipboard.writeText(hexString).then(() => {
+            alert("Код прогресса скопирован в буфер обмена!\n\nКод: " + hexString);
+        }).catch(err => {
+            prompt("Вот твой код прогресса (скопируй его вручную):", hexString);
+        });
+    }
+
+    function importData() {
+        let hexString = prompt("Вставь сюда код прогресса (hex-строку):");
+        if (!hexString) return;
+
+        hexString = hexString.trim();
+        let binaryString = "";
+
+        for (let i = 0; i < hexString.length; i++) {
+            let val = parseInt(hexString[i], 16);
+            if (isNaN(val)) {
+                alert("Ошибка: неверный формат кода!");
+                return;
+            }
+            binaryString += val.toString(2).padStart(4, "0");
+        }
+
+        const ids = getAllAdapterIds();
+        
+        ids.forEach((id, index) => {
+            const bit = binaryString[index] === "1";
+            localStorage.setItem('incarnon_' + id, bit ? 'true' : 'false');
+        });
+
+        renderApp();
+        alert("Прогресс успешно импортирован!");
+    }
 
     function renderApp() {
         const container = document.getElementById('categoriesContainer');

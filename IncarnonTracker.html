@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Incarnon Adapter Tracker (Warframe)</title>
+    <title id="pageTitle">Трекер Инкарнон Адаптеров (Warframe)</title>
     <link rel="icon" href="https://ru.wiki.warframe.com/images/Favicon.ico" type="image/x-icon">
     <style>
         :root {
@@ -16,6 +16,7 @@
             --text-main: #e0e0e0;
             --text-muted: #999;
             --border: #333;
+            --max-width: 1300px;
         }
 
         [data-theme="light"] {
@@ -39,8 +40,9 @@
             transition: background-color 0.3s, color 0.3s;
         }
         .container {
-            max-width: 1300px;
+            max-width: var(--max-width);
             margin: 0 auto;
+            transition: max-width 0.3s ease;
         }
         .top-settings-bar {
             display: flex;
@@ -246,11 +248,18 @@
         .btn-import:hover {
             background-color: #1976D2;
         }
+        .btn-fullscreen {
+            background-color: #9c27b0;
+            color: white;
+        }
+        .btn-fullscreen:hover {
+            background-color: #7b1fa2;
+        }
     </style>
 </head>
 <body data-theme="dark">
 
-<div class="container">
+<div class="container" id="mainContainer">
     <div class="top-settings-bar">
         <select id="langSelect" onchange="changeLanguage(this.value)">
             <option value="ru">Русский</option>
@@ -268,6 +277,7 @@
     </div>
 
     <div class="controls-bar">
+        <button class="btn-fullscreen" id="fullscreenBtn" onclick="toggleFullscreenWidth()">🖥️ На весь экран</button>
         <button class="btn-export" onclick="exportData()" data-i18n="exportBtn">Экспорт кода</button>
         <button class="btn-import" onclick="importData()" data-i18n="importBtn">Импорт кода</button>
         <button onclick="resetAll()" data-i18n="resetBtn">Сбросить все галочки</button>
@@ -282,6 +292,7 @@
        ========================================================================= */
     const UI_TEXT = {
         ru: {
+            pageTitle: "Трекер Инкарнон Адаптеров (Warframe)",
             mainTitle: "Трекер Инкарнон Адаптеров",
             subTitle: "Интерактивный трекер ресурсов для улучшений оружия",
             dashboardTitle: "Общие требования для выбранных (неустановленных) адаптеров",
@@ -290,6 +301,8 @@
             resetBtn: "Сбросить все галочки",
             installed: "Установлен",
             themeBtn: "Тема",
+            fullscreenOn: "🖥️ На весь экран",
+            fullscreenOff: "⏹️ Обычный вид",
             categories: {
                 primary: "Основное",
                 secondary: "Вторичное",
@@ -304,6 +317,7 @@
             }
         },
         en: {
+            pageTitle: "Incarnon Adapter Tracker (Warframe)",
             mainTitle: "Incarnon Adapter Tracker",
             subTitle: "Interactive resource tracker for weapon upgrades",
             dashboardTitle: "Total requirements for selected (uninstalled) adapters",
@@ -312,6 +326,8 @@
             resetBtn: "Reset All Checkboxes",
             installed: "Installed",
             themeBtn: "Theme",
+            fullscreenOn: "🖥️ Fullscreen Width",
+            fullscreenOff: "⏹️ Normal View",
             categories: {
                 primary: "Primary",
                 secondary: "Secondary",
@@ -417,16 +433,28 @@
 
     let currentLang = localStorage.getItem('incarnon_lang') || 'ru';
     let currentTheme = localStorage.getItem('incarnon_theme') || 'dark';
+    let isFullscreenWidth = localStorage.getItem('incarnon_fullscreen') === 'true';
 
     function initSettings() {
         document.getElementById('langSelect').value = currentLang;
         document.body.setAttribute('data-theme', currentTheme);
+        if (isFullscreenWidth) {
+            document.getElementById('mainContainer').style.maxWidth = '100%';
+        }
     }
 
     function toggleTheme() {
         currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
         document.body.setAttribute('data-theme', currentTheme);
         localStorage.setItem('incarnon_theme', currentTheme);
+    }
+
+    function toggleFullscreenWidth() {
+        isFullscreenWidth = !isFullscreenWidth;
+        localStorage.setItem('incarnon_fullscreen', isFullscreenWidth);
+        const container = document.getElementById('mainContainer');
+        container.style.maxWidth = isFullscreenWidth ? '100%' : '1300px';
+        applyTranslations();
     }
 
     function changeLanguage(lang) {
@@ -438,12 +466,18 @@
 
     function applyTranslations() {
         const t = UI_TEXT[currentLang];
+        document.getElementById('pageTitle').innerText = t.pageTitle;
+        
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
             if (t[key]) {
                 el.innerText = t[key];
             }
         });
+
+        // Обновляем текст кнопки полноэкранного режима
+        const fsBtn = document.getElementById('fullscreenBtn');
+        fsBtn.innerText = isFullscreenWidth ? t.fullscreenOff : t.fullscreenOn;
     }
 
     function getAllAdapterIds() {

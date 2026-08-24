@@ -459,6 +459,8 @@
             filterAll: "Все адаптеры",
             filterUninstalled: "Только не установленные",
             filterInstalled: "Только установленные",
+            warehouseSub: "Всего: {total} | На складе: {stock}",
+            warehouseEnough: "Хватает!",
             categories: { primary: "Основное", secondary: "Вторичное", melee: "Ближний Бой" },
             alerts: {
                 linkCopied: "Ссылка с вашим прогрессом скопирована в буфер обмена!",
@@ -482,6 +484,8 @@
             filterAll: "All adapters",
             filterUninstalled: "Only uninstalled",
             filterInstalled: "Only installed",
+            warehouseSub: "Total: {total} | In stock: {stock}",
+            warehouseEnough: "Enough!",
             categories: { primary: "Primary", secondary: "Secondary", melee: "Melee" },
             alerts: {
                 linkCopied: "Progress link copied to clipboard!",
@@ -868,6 +872,8 @@
         const totalsContainer = document.getElementById('totalsContainer');
         totalsContainer.innerHTML = '';
 
+        const t = UI_TEXT[currentLang];
+
         for (let [resKey, totalAmount] of Object.entries(totals)) {
             if (totalAmount > 0) {
                 const res = RESOURCE_NAMES[resKey] || { nameRu: resKey, nameEn: resKey, img: '' };
@@ -880,10 +886,14 @@
                 
                 let countsHtml = `<span class="res-count-main">${deficit.toLocaleString()}</span>`;
                 if (stock > 0) {
+                    let subText = t.warehouseSub
+                        .replace('{total}', totalAmount.toLocaleString())
+                        .replace('{stock}', stock.toLocaleString());
+
                     countsHtml = `
                         <div class="res-counts">
-                            <div class="res-count-main" style="color: ${deficit === 0 ? '#4CAF50' : 'var(--accent)'}">${deficit === 0 ? 'Хватает!' : deficit.toLocaleString()}</div>
-                            <div class="res-count-sub">Всего: ${totalAmount.toLocaleString()} | На складе: ${stock.toLocaleString()}</div>
+                            <div class="res-count-main" style="color: ${deficit === 0 ? '#4CAF50' : 'var(--accent)'}">${deficit === 0 ? t.warehouseEnough : deficit.toLocaleString()}</div>
+                            <div class="res-count-sub">${subText}</div>
                         </div>
                     `;
                 }

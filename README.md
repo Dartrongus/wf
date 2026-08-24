@@ -13,3 +13,5 @@
 
 
 - All checkmarks are saved in LocalStorage; you can copy the export link to transfer the checkmarks to another device or browser
+
+![Иллюстрация к проекту]([https://github.com/jon/coolproject/raw/master/](https://dartrongus.github.io/wf/)img/1.png)

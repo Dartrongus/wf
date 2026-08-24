@@ -59,9 +59,30 @@
         .subtitle {
             text-align: center;
             color: var(--text-muted);
-            margin-bottom: 25px;
+            margin-bottom: 15px;
         }
         
+        /* Блок текущей недели */
+        .current-week-banner {
+            background: linear-gradient(135deg, rgba(0, 188, 212, 0.15), rgba(255, 152, 0, 0.15));
+            border: 1px solid var(--accent);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 25px;
+            text-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+        }
+        .current-week-title {
+            font-size: 1.1em;
+            font-weight: bold;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+        .current-week-weapons {
+            font-size: 0.95em;
+            color: var(--text-main);
+        }
+
         /* Прогресс-бар общий */
         .global-progress-bar {
             background: var(--card-bg);
@@ -241,14 +262,6 @@
             justify-content: space-between;
             align-items: center;
         }
-        .cat-collapse-btn {
-            background: none;
-            border: none;
-            color: var(--text-muted);
-            cursor: pointer;
-            font-size: 0.8em;
-            padding: 0;
-        }
         .adapter-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
@@ -263,6 +276,23 @@
             transition: opacity 0.2s, border-color 0.2s, transform 0.2s;
             position: relative;
         }
+        /* Подсветка текущей недели */
+        .adapter-card.current-week {
+            border-left-color: #ff9800;
+            box-shadow: 0 0 10px rgba(255, 152, 0, 0.3);
+        }
+        .current-badge {
+            display: inline-block;
+            background: #ff9800;
+            color: #121212;
+            font-size: 0.7em;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            margin-left: 6px;
+            vertical-align: middle;
+        }
+
         .adapter-card.hidden {
             display: none !important;
         }
@@ -394,6 +424,12 @@
     <h1 data-i18n="mainTitle">Трекер Инкарнон Адаптеров</h1>
     <div class="subtitle" data-i18n="subTitle">Интерактивный трекер ресурсов для улучшений оружия</div>
 
+    <!-- Баннер текущей недели -->
+    <div class="current-week-banner" id="currentWeekBanner">
+        <div class="current-week-title" id="currentWeekTitle">Загрузка информации о неделе...</div>
+        <div class="current-week-weapons" id="currentWeekWeapons"></div>
+    </div>
+
     <!-- Индикатор общего прогресса -->
     <div class="global-progress-bar">
         <div class="progress-info">
@@ -428,6 +464,7 @@
             <option value="all" data-i18n="filterAll">Все адаптеры</option>
             <option value="uninstalled" data-i18n="filterUninstalled">Только не установленные</option>
             <option value="installed" data-i18n="filterInstalled">Только установленные</option>
+            <option value="current" data-i18n="filterCurrent">⚡ Доступны на этой неделе</option>
         </select>
     </div>
 
@@ -459,8 +496,11 @@
             filterAll: "Все адаптеры",
             filterUninstalled: "Только не установленные",
             filterInstalled: "Только установленные",
+            filterCurrent: "⚡ Доступны на этой неделе",
             warehouseSub: "Всего: {total} | На складе: {stock}",
             warehouseEnough: "Хватает!",
+            currentWeekLabel: "⚡ Текущая неделя {week}:",
+            currentBadgeText: "Доступно сейчас",
             categories: { primary: "Основное", secondary: "Вторичное", melee: "Ближний Бой" },
             alerts: {
                 linkCopied: "Ссылка с вашим прогрессом скопирована в буфер обмена!",
@@ -484,8 +524,11 @@
             filterAll: "All adapters",
             filterUninstalled: "Only uninstalled",
             filterInstalled: "Only installed",
+            filterCurrent: "⚡ Available this week",
             warehouseSub: "Total: {total} | In stock: {stock}",
             warehouseEnough: "Enough!",
+            currentWeekLabel: "⚡ Current Week {week} Rotation:",
+            currentBadgeText: "Available Now",
             categories: { primary: "Primary", secondary: "Secondary", melee: "Melee" },
             alerts: {
                 linkCopied: "Progress link copied to clipboard!",
@@ -493,6 +536,40 @@
             }
         }
     };
+
+    // Полный цикл из 9 недель (A-I), привязанный к вашим id адаптеров
+    const incarnonRotationWeeks = [
+        ["braton", "lato", "skana", "paris", "kunai"],               // Week 1 (A)
+        ["boar", "gammacor", "angstrum", "gorgon", "anku"],         // Week 2 (B)
+        ["bo", "latron", "furis", "furax", "strun"],                // Week 3 (C)
+        ["lex", "magister", "boltor", "bronco", "ceramic_dagger"],  // Week 4 (D)
+        ["torid", "toxocyst", "dual_ichor", "miter", "atomos"],     // Week 5 (E)
+        ["ack_brunt", "soma", "vasto", "nami_solo", "burston"],     // Week 6 (F)
+        ["zylok", "sibear", "dread", "despair", "hate"],            // Week 7 (G)
+        ["dera", "cestra", "okina", "sybaris", "sicarus"],         // Week 8 (H)
+        ["vectis", "stug", "ballistica", "destreza", "obex"]        // Week 9 (I)
+    ];
+
+    function getCurrentIncarnonRotation() {
+        // Опорная точка: Понедельник, 24 августа 2026 года, 03:00 МСК (00:00 UTC) = начало Week 9 (индекс 8)
+        const anchorDate = Date.UTC(2026, 7, 24, 0, 0, 0); 
+        
+        const now = new Date();
+        const nowUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes());
+        
+        const diffMs = nowUTC - anchorDate;
+        const diffWeeks = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 7));
+        
+        // Вычисляем индекс с учетом цикличности
+        let currentWeekIndex = (8 + (diffWeeks % 9)) % 9;
+        
+        const weekLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
+        
+        return {
+            letter: weekLetters[currentWeekIndex],
+            adapters: incarnonRotationWeeks[currentWeekIndex]
+        };
+    }
 
     const RESOURCE_NAMES = {
         pathos: { nameRu: "Струбцина Пафоса", nameEn: "Pathos Clamp", img: "https://wiki.warframe.com/images/PathosClamp.png" },
@@ -626,6 +703,28 @@
 
         const fsBtn = document.getElementById('fullscreenBtn');
         fsBtn.innerText = isFullscreenWidth ? t.fullscreenOff : t.fullscreenOn;
+
+        updateCurrentWeekBanner();
+    }
+
+    function updateCurrentWeekBanner() {
+        const rotation = getCurrentIncarnonRotation();
+        const t = UI_TEXT[currentLang];
+        
+        document.getElementById('currentWeekTitle').innerText = t.currentWeekLabel.replace('{week}', rotation.letter);
+        
+        // Находим человекочитаемые названия пушек для текущей недели
+        let namesList = [];
+        rotation.adapters.forEach(id => {
+            categoriesData.forEach(cat => {
+                cat.adapters.forEach(a => {
+                    if (a.id === id) {
+                        namesList.push(currentLang === 'en' ? a.nameEn.replace(' Incarnon Genesis', '') : a.nameRu.replace('Генезис Инкарнона: ', ''));
+                    }
+                });
+            });
+        });
+        document.getElementById('currentWeekWeapons').innerText = namesList.join(' • ');
     }
 
     function getAllAdapterIds() {
@@ -634,7 +733,6 @@
         return ids;
     }
 
-    // Сохранение данных в URL Hash и localStorage одновременно
     function saveState() {
         const ids = getAllAdapterIds();
         let binaryString = "";
@@ -649,11 +747,9 @@
             hexString += parseInt(chunk, 2).toString(16);
         }
 
-        // Записываем в URL без перезагрузки страницы
         history.replaceState(null, "", "#" + hexString);
     }
 
-    // Загрузка состояния из URL Hash (приоритет) или из localStorage
     function loadFromURLOrStorage() {
         const hash = window.location.hash.replace("#", "").trim();
         const ids = getAllAdapterIds();
@@ -671,7 +767,6 @@
                 localStorage.setItem('incarnon_' + id, bit ? 'true' : 'false');
             });
         } else {
-            // Если в URL пусто, проверяем localStorage, если там пусто — инициализируем фолс
             ids.forEach(id => {
                 if (localStorage.getItem('incarnon_' + id) === null) {
                     localStorage.setItem('incarnon_' + id, 'false');
@@ -729,6 +824,7 @@
         const container = document.getElementById('categoriesContainer');
         container.innerHTML = '';
         const t = UI_TEXT[currentLang];
+        const currentRotation = getCurrentIncarnonRotation();
 
         categoriesData.forEach(cat => {
             const section = document.createElement('div');
@@ -739,6 +835,7 @@
             cat.adapters.forEach(adapter => {
                 const isChecked = localStorage.getItem('incarnon_' + adapter.id) === 'true';
                 const weaponName = currentLang === 'en' ? adapter.nameEn : adapter.nameRu;
+                const isCurrentWeek = currentRotation.adapters.includes(adapter.id);
                 
                 let costsList = '';
                 for (let [resKey, amount] of Object.entries(adapter.costs)) {
@@ -755,12 +852,15 @@
                 }
 
                 gridHtml += `
-                    <div class="adapter-card ${isChecked ? 'completed' : ''}" id="card_${adapter.id}" data-name="${weaponName.toLowerCase()}" data-checked="${isChecked}">
+                    <div class="adapter-card ${isChecked ? 'completed' : ''} ${isCurrentWeek ? 'current-week' : ''}" id="card_${adapter.id}" data-name="${weaponName.toLowerCase()}" data-checked="${isChecked}" data-current="${isCurrentWeek}">
                         <div class="adapter-content">
                             <img src="${adapter.img}" class="weapon-img" alt="">
                             <div class="adapter-details">
                                 <div class="adapter-header">
-                                    <span class="adapter-title">${weaponName}</span>
+                                    <span class="adapter-title">
+                                        ${weaponName}
+                                        ${isCurrentWeek ? `<span class="current-badge">${t.currentBadgeText}</span>` : ''}
+                                    </span>
                                     <label class="checkbox-label">
                                         <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleAdapter('${adapter.id}')"> ${t.installed}
                                     </label>
@@ -820,12 +920,14 @@
         cards.forEach(card => {
             const name = card.getAttribute('data-name');
             const isChecked = card.getAttribute('data-checked') === 'true';
+            const isCurrent = card.getAttribute('data-current') === 'true';
 
             let matchesSearch = name.includes(query);
             let matchesStatus = true;
 
             if (status === 'uninstalled') matchesStatus = !isChecked;
             if (status === 'installed') matchesStatus = isChecked;
+            if (status === 'current') matchesStatus = isCurrent;
 
             if (matchesSearch && matchesStatus) {
                 card.classList.remove('hidden');

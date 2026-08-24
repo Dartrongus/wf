@@ -154,6 +154,14 @@
         .warehouse-panel.open {
             display: block;
         }
+        .warehouse-header-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
         .warehouse-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
@@ -230,19 +238,40 @@
             flex-wrap: wrap;
             align-items: center;
         }
-        .search-input {
+        .search-wrapper {
+            position: relative;
             flex-grow: 1;
             min-width: 250px;
+            display: flex;
+            align-items: center;
+        }
+        .search-input {
+            width: 100%;
             background: var(--card-bg);
             color: var(--text-main);
             border: 1px solid var(--border);
-            padding: 9px 15px;
+            padding: 9px 35px 9px 15px;
             border-radius: 4px;
             font-size: 0.95em;
         }
         .search-input:focus {
             outline: none;
             border-color: var(--accent);
+        }
+        .search-clear-btn {
+            position: absolute;
+            right: 10px;
+            background: transparent;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 1.1em;
+            padding: 0;
+            display: none;
+        }
+        .search-clear-btn:hover {
+            color: var(--text-main);
+            background: transparent;
         }
 
         .category-section {
@@ -413,6 +442,16 @@
         .btn-export:hover {
             background-color: #388E3C;
         }
+        .btn-small-danger {
+            background-color: #e53935;
+            color: white;
+            font-size: 0.8em;
+            padding: 4px 10px;
+        }
+        .btn-small-danger:hover {
+            background-color: #c62828;
+            color: white;
+        }
     </style>
 </head>
 <body data-theme="dark">
@@ -451,7 +490,10 @@
         </h3>
         
         <div class="warehouse-panel" id="warehousePanel">
-            <div style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 8px;" data-i18n="warehouseDesc">Укажи, сколько ресурсов у тебя уже есть. Трекер автоматически вычтет их из общего дефицита:</div>
+            <div class="warehouse-header-row">
+                <div style="font-size: 0.9em; color: var(--text-muted);" data-i18n="warehouseDesc">Укажи, сколько ресурсов у тебя уже есть. Трекер автоматически вычтет их из общего дефицита:</div>
+                <button class="btn-small-danger" onclick="resetWarehouse()" data-i18n="resetWarehouseBtn">Сбросить склад</button>
+            </div>
             <div class="warehouse-grid" id="warehouseContainer"></div>
         </div>
 
@@ -459,7 +501,10 @@
     </div>
 
     <div class="filters-bar">
-        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Быстрый поиск оружия..." oninput="filterAdapters()" data-i18n-placeholder="searchPlaceholder">
+        <div class="search-wrapper">
+            <input type="text" id="searchInput" class="search-input" placeholder="🔍 Быстрый поиск оружия..." oninput="handleSearchInput()" data-i18n-placeholder="searchPlaceholder">
+            <button id="searchClearBtn" class="search-clear-btn" onclick="clearSearch()" title="Сбросить поиск">✕</button>
+        </div>
         <select id="statusFilter" onchange="filterAdapters()">
             <option value="all" data-i18n="filterAll">Все адаптеры</option>
             <option value="uninstalled" data-i18n="filterUninstalled">Только не установленные</option>
@@ -487,6 +532,7 @@
             dashboardTitle: "Общие требования для не установленных адаптеров",
             warehouseToggle: "📦 Мой склад ресурсов",
             warehouseDesc: "Укажи, сколько ресурсов у тебя уже есть. Трекер автоматически вычтет их из общего дефицита:",
+            resetWarehouseBtn: "Сбросить склад",
             shareBtn: "🔗 Скопировать ссылку",
             exportExcelBtn: "Экспорт в Excel (CSV)",
             resetBtn: "Сбросить все галочки",
@@ -518,6 +564,7 @@
             dashboardTitle: "Total requirements for uninstalled adapters",
             warehouseToggle: "📦 My Resource Warehouse",
             warehouseDesc: "Enter how many resources you already have. The tracker will subtract them from the total:",
+            resetWarehouseBtn: "Reset Warehouse",
             shareBtn: "🔗 Copy Link",
             exportExcelBtn: "Export to Excel (CSV)",
             resetBtn: "Reset All Checkboxes",
@@ -783,12 +830,10 @@
         });
     }
 
-    // Экспорт в CSV-файл (открывается в Excel и Google Таблицах)
     function exportToExcelCSV() {
         const t = UI_TEXT[currentLang];
-        let csvContent = "\uFEFF"; // BOM для корректного отображения кириллицы в Excel
+        let csvContent = "\uFEFF";
         
-        // Заголовки таблицы
         csvContent += t.csvHeaders.join(";") + "\n";
 
         categoriesData.forEach(cat => {
@@ -806,7 +851,6 @@
                 }
                 const costsStr = costsParts.join(", ");
 
-                // Экранируем кавычки и запятые для CSV с разделителем точка с запятой
                 const row = [
                     `"${catName}"`,
                     `"${weaponName.replace(/"/g, '""')}"`,
@@ -858,6 +902,33 @@
         const num = Math.max(0, parseInt(val) || 0);
         localStorage.setItem('warehouse_' + resKey, num);
         updateTotals();
+    }
+
+    function resetWarehouse() {
+        Object.keys(RESOURCE_NAMES).forEach(resKey => {
+            localStorage.setItem('warehouse_' + resKey, '0');
+        });
+        renderWarehouseInputs();
+        updateTotals();
+    }
+
+    function handleSearchInput() {
+        const input = document.getElementById('searchInput');
+        const clearBtn = document.getElementById('searchClearBtn');
+        if (input.value.length > 0) {
+            clearBtn.style.display = 'block';
+        } else {
+            clearBtn.style.display = 'none';
+        }
+        filterAdapters();
+    }
+
+    function clearSearch() {
+        const input = document.getElementById('searchInput');
+        input.value = '';
+        document.getElementById('searchClearBtn').style.display = 'none';
+        filterAdapters();
+        input.focus();
     }
 
     function renderApp() {
@@ -1037,7 +1108,7 @@
                     countsHtml = `
                         <div class="res-counts">
                             <div class="res-count-main" style="color: ${deficit === 0 ? '#4CAF50' : 'var(--accent)'}">${deficit === 0 ? t.warehouseEnough : deficit.toLocaleString()}</div>
-                            <div class="res-count-sub">${subText}</div>
+                            <div class="subText">${subText}</div>
                         </div>
                     `;
                 }

@@ -15,3 +15,4 @@
 - All checkmarks are saved in LocalStorage; you can copy the export link to transfer the checkmarks to another device or browser
 
 ![Иллюстрация к проекту](https://dartrongus.github.io/wf/img/1.png)
+![Иллюстрация к проекту](https://dartrongus.github.io/wf/img/2.png)

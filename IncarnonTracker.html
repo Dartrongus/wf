@@ -276,7 +276,6 @@
             transition: opacity 0.2s, border-color 0.2s, transform 0.2s;
             position: relative;
         }
-        /* Подсветка текущей недели */
         .adapter-card.current-week {
             border-left-color: #ff9800;
             box-shadow: 0 0 10px rgba(255, 152, 0, 0.3);
@@ -292,7 +291,6 @@
             margin-left: 6px;
             vertical-align: middle;
         }
-
         .adapter-card.hidden {
             display: none !important;
         }
@@ -408,6 +406,13 @@
         .btn-fullscreen:hover {
             background-color: #7b1fa2;
         }
+        .btn-export {
+            background-color: #4CAF50;
+            color: white;
+        }
+        .btn-export:hover {
+            background-color: #388E3C;
+        }
     </style>
 </head>
 <body data-theme="dark">
@@ -424,13 +429,11 @@
     <h1 data-i18n="mainTitle">Трекер Инкарнон Адаптеров</h1>
     <div class="subtitle" data-i18n="subTitle">Интерактивный трекер ресурсов для улучшений оружия</div>
 
-    <!-- Баннер текущей недели -->
     <div class="current-week-banner" id="currentWeekBanner">
         <div class="current-week-title" id="currentWeekTitle">Загрузка информации о неделе...</div>
         <div class="current-week-weapons" id="currentWeekWeapons"></div>
     </div>
 
-    <!-- Индикатор общего прогресса -->
     <div class="global-progress-bar">
         <div class="progress-info">
             <span id="progressText">Установлено: 0 из 0 (0%)</span>
@@ -441,14 +444,12 @@
         </div>
     </div>
 
-    <!-- Дашборд ресурсов и склада -->
     <div class="dashboard">
         <h3>
             <span data-i18n="dashboardTitle">Общие требования для не установленных адаптеров</span>
             <button class="warehouse-toggle-btn" onclick="toggleWarehouse()" data-i18n="warehouseToggle">📦 Мой склад ресурсов</button>
         </h3>
         
-        <!-- Склад игрока -->
         <div class="warehouse-panel" id="warehousePanel">
             <div style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 8px;" data-i18n="warehouseDesc">Укажи, сколько ресурсов у тебя уже есть. Трекер автоматически вычтет их из общего дефицита:</div>
             <div class="warehouse-grid" id="warehouseContainer"></div>
@@ -457,7 +458,6 @@
         <div class="res-totals-grid" id="totalsContainer"></div>
     </div>
 
-    <!-- Панель фильтров и поиска -->
     <div class="filters-bar">
         <input type="text" id="searchInput" class="search-input" placeholder="🔍 Быстрый поиск оружия..." oninput="filterAdapters()" data-i18n-placeholder="searchPlaceholder">
         <select id="statusFilter" onchange="filterAdapters()">
@@ -469,6 +469,7 @@
     </div>
 
     <div class="controls-bar">
+        <button class="btn-export" onclick="exportToExcelCSV()">📊 <span data-i18n="exportExcelBtn">Экспорт в Excel (CSV)</span></button>
         <button class="btn-fullscreen" id="fullscreenBtn" onclick="toggleFullscreenWidth()">🖥️ На весь экран</button>
         <button class="btn-share" onclick="shareProgressLink()" data-i18n="shareBtn">🔗 Скопировать ссылку на прогресс</button>
         <button onclick="resetAll()" data-i18n="resetBtn">Сбросить все галочки</button>
@@ -487,8 +488,11 @@
             warehouseToggle: "📦 Мой склад ресурсов",
             warehouseDesc: "Укажи, сколько ресурсов у тебя уже есть. Трекер автоматически вычтет их из общего дефицита:",
             shareBtn: "🔗 Скопировать ссылку",
+            exportExcelBtn: "Экспорт в Excel (CSV)",
             resetBtn: "Сбросить все галочки",
             installed: "Установлен",
+            yes: "Да",
+            no: "Нет",
             themeBtn: "Тема",
             fullscreenOn: "🖥️ На весь экран",
             fullscreenOff: "⏹️ Обычный вид",
@@ -502,9 +506,9 @@
             currentWeekLabel: "⚡ Текущая неделя {week}:",
             currentBadgeText: "Доступно сейчас",
             categories: { primary: "Основное", secondary: "Вторичное", melee: "Ближний Бой" },
+            csvHeaders: ["Категория", "Оружие", "Установлен", "Ресурсы и количество"],
             alerts: {
                 linkCopied: "Ссылка с вашим прогрессом скопирована в буфер обмена!",
-                successImport: "Прогресс успешно загружен из ссылки!"
             }
         },
         en: {
@@ -515,8 +519,11 @@
             warehouseToggle: "📦 My Resource Warehouse",
             warehouseDesc: "Enter how many resources you already have. The tracker will subtract them from the total:",
             shareBtn: "🔗 Copy Link",
+            exportExcelBtn: "Export to Excel (CSV)",
             resetBtn: "Reset All Checkboxes",
             installed: "Installed",
+            yes: "Yes",
+            no: "No",
             themeBtn: "Theme",
             fullscreenOn: "🖥️ Fullscreen Width",
             fullscreenOff: "⏹️ Normal View",
@@ -530,41 +537,33 @@
             currentWeekLabel: "⚡ Current Week {week} Rotation:",
             currentBadgeText: "Available Now",
             categories: { primary: "Primary", secondary: "Secondary", melee: "Melee" },
+            csvHeaders: ["Category", "Weapon", "Installed", "Resources and Quantities"],
             alerts: {
                 linkCopied: "Progress link copied to clipboard!",
-                successImport: "Progress successfully loaded from link!"
             }
         }
     };
 
-    // Полный цикл из 9 недель (A-I), привязанный к вашим id адаптеров
     const incarnonRotationWeeks = [
-        ["braton", "lato", "skana", "paris", "kunai"],               // Week 1 (A)
-        ["boar", "gammacor", "angstrum", "gorgon", "anku"],         // Week 2 (B)
-        ["bo", "latron", "furis", "furax", "strun"],                // Week 3 (C)
-        ["lex", "magister", "boltor", "bronco", "ceramic_dagger"],  // Week 4 (D)
-        ["torid", "toxocyst", "dual_ichor", "miter", "atomos"],     // Week 5 (E)
-        ["ack_brunt", "soma", "vasto", "nami_solo", "burston"],     // Week 6 (F)
-        ["zylok", "sibear", "dread", "despair", "hate"],            // Week 7 (G)
-        ["dera", "cestra", "okina", "sybaris", "sicarus"],         // Week 8 (H)
-        ["vectis", "stug", "ballistica", "destreza", "obex"]        // Week 9 (I)
+        ["braton", "lato", "skana", "paris", "kunai"],
+        ["boar", "gammacor", "angstrum", "gorgon", "anku"],
+        ["bo", "latron", "furis", "furax", "strun"],
+        ["lex", "magister", "boltor", "bronco", "ceramic_dagger"],
+        ["torid", "toxocyst", "dual_ichor", "miter", "atomos"],
+        ["ack_brunt", "soma", "vasto", "nami_solo", "burston"],
+        ["zylok", "sibear", "dread", "despair", "hate"],
+        ["dera", "cestra", "okina", "sybaris", "sicarus"],
+        ["vectis", "stug", "ballistica", "destreza", "obex"]
     ];
 
     function getCurrentIncarnonRotation() {
-        // Опорная точка: Понедельник, 24 августа 2026 года, 03:00 МСК (00:00 UTC) = начало Week 9 (индекс 8)
         const anchorDate = Date.UTC(2026, 7, 24, 0, 0, 0); 
-        
         const now = new Date();
         const nowUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes());
-        
         const diffMs = nowUTC - anchorDate;
         const diffWeeks = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 7));
-        
-        // Вычисляем индекс с учетом цикличности
         let currentWeekIndex = (8 + (diffWeeks % 9)) % 9;
-        
         const weekLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
-        
         return {
             letter: weekLetters[currentWeekIndex],
             adapters: incarnonRotationWeeks[currentWeekIndex]
@@ -713,7 +712,6 @@
         
         document.getElementById('currentWeekTitle').innerText = t.currentWeekLabel.replace('{week}', rotation.letter);
         
-        // Находим человекочитаемые названия пушек для текущей недели
         let namesList = [];
         rotation.adapters.forEach(id => {
             categoriesData.forEach(cat => {
@@ -783,6 +781,50 @@
         }).catch(err => {
             prompt("Скопируйте ссылку вручную:", window.location.href);
         });
+    }
+
+    // Экспорт в CSV-файл (открывается в Excel и Google Таблицах)
+    function exportToExcelCSV() {
+        const t = UI_TEXT[currentLang];
+        let csvContent = "\uFEFF"; // BOM для корректного отображения кириллицы в Excel
+        
+        // Заголовки таблицы
+        csvContent += t.csvHeaders.join(";") + "\n";
+
+        categoriesData.forEach(cat => {
+            const catName = t.categories[cat.categoryKey];
+            cat.adapters.forEach(adapter => {
+                const isChecked = localStorage.getItem('incarnon_' + adapter.id) === 'true';
+                const weaponName = currentLang === 'en' ? adapter.nameEn : adapter.nameRu;
+                const statusStr = isChecked ? t.yes : t.no;
+
+                let costsParts = [];
+                for (let [resKey, amount] of Object.entries(adapter.costs)) {
+                    const res = RESOURCE_NAMES[resKey] || { nameRu: resKey, nameEn: resKey };
+                    const resName = currentLang === 'en' ? res.nameEn : res.nameRu;
+                    costsParts.push(`${resName}: ${amount}`);
+                }
+                const costsStr = costsParts.join(", ");
+
+                // Экранируем кавычки и запятые для CSV с разделителем точка с запятой
+                const row = [
+                    `"${catName}"`,
+                    `"${weaponName.replace(/"/g, '""')}"`,
+                    `"${statusStr}"`,
+                    `"${costsStr}"`
+                ];
+                csvContent += row.join(";") + "\n";
+            });
+        });
+
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.setAttribute('href', url);
+        link.setAttribute('download', 'Warframe_Incarnon_Progress.csv');
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
     }
 
     function toggleWarehouse() {

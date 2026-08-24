@@ -49,6 +49,7 @@
             justify-content: flex-end;
             gap: 10px;
             margin-bottom: 15px;
+            flex-wrap: wrap;
         }
         h1 {
             text-align: center;
@@ -58,14 +59,45 @@
         .subtitle {
             text-align: center;
             color: var(--text-muted);
-            margin-bottom: 30px;
+            margin-bottom: 25px;
         }
+        
+        /* Прогресс-бар общий */
+        .global-progress-bar {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 15px 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .progress-info {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+            font-weight: bold;
+            font-size: 0.95em;
+        }
+        .progress-track {
+            background: var(--card-sub);
+            border-radius: 4px;
+            height: 12px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+        .progress-fill {
+            background: var(--accent);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+        }
+
         .dashboard {
             background: var(--card-bg);
             border: 1px solid var(--border);
             border-radius: 8px;
             padding: 20px;
-            margin-bottom: 30px;
+            margin-bottom: 25px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
         }
         .dashboard h3 {
@@ -73,7 +105,60 @@
             color: var(--warning);
             border-bottom: 1px solid var(--border);
             padding-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
+        .warehouse-toggle-btn {
+            font-size: 0.8em;
+            background: var(--card-sub);
+            color: var(--accent);
+            border: 1px solid var(--border);
+            padding: 4px 10px;
+        }
+        .warehouse-toggle-btn:hover {
+            background: var(--accent);
+            color: #fff;
+        }
+
+        /* Панель склада */
+        .warehouse-panel {
+            display: none;
+            background: var(--card-sub);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 15px;
+            border: 1px dashed var(--border);
+        }
+        .warehouse-panel.open {
+            display: block;
+        }
+        .warehouse-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .warehouse-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: var(--card-bg);
+            padding: 6px 10px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+        .warehouse-item input {
+            width: 60px;
+            background: var(--card-sub);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            border-radius: 3px;
+            padding: 3px 5px;
+            text-align: right;
+            font-weight: bold;
+        }
+
         .res-totals-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
@@ -103,11 +188,42 @@
             font-size: 0.95em;
             color: var(--text-main);
         }
-        .res-count {
+        .res-counts {
+            text-align: right;
+        }
+        .res-count-main {
             font-weight: bold;
-            font-size: 1.1em;
+            font-size: 1.05em;
             color: var(--accent);
         }
+        .res-count-sub {
+            font-size: 0.75em;
+            color: var(--text-muted);
+        }
+
+        /* Панель фильтров и поиска */
+        .filters-bar {
+            display: flex;
+            gap: 15px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .search-input {
+            flex-grow: 1;
+            min-width: 250px;
+            background: var(--card-bg);
+            color: var(--text-main);
+            border: 1px solid var(--border);
+            padding: 9px 15px;
+            border-radius: 4px;
+            font-size: 0.95em;
+        }
+        .search-input:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+
         .category-section {
             background: var(--card-bg);
             border-radius: 8px;
@@ -121,6 +237,17 @@
             border-bottom: 2px solid var(--border);
             padding-bottom: 8px;
             margin-top: 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .cat-collapse-btn {
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            cursor: pointer;
+            font-size: 0.8em;
+            padding: 0;
         }
         .adapter-grid {
             display: grid;
@@ -133,8 +260,11 @@
             border-left: 4px solid var(--accent);
             padding: 15px;
             border-radius: 6px;
-            transition: opacity 0.2s, border-color 0.2s;
+            transition: opacity 0.2s, border-color 0.2s, transform 0.2s;
             position: relative;
+        }
+        .adapter-card.hidden {
+            display: none !important;
         }
         .adapter-card.completed {
             opacity: 0.5;
@@ -208,7 +338,7 @@
         }
         .controls-bar {
             text-align: right;
-            margin-bottom: 15px;
+            margin-bottom: 25px;
             display: flex;
             gap: 10px;
             justify-content: flex-end;
@@ -234,18 +364,11 @@
             color: var(--text-main);
             border: 1px solid var(--border);
         }
-        .btn-export {
-            background-color: #4CAF50;
-            color: white;
-        }
-        .btn-export:hover {
-            background-color: #388E3C;
-        }
-        .btn-import {
+        .btn-share {
             background-color: #2196F3;
             color: white;
         }
-        .btn-import:hover {
+        .btn-share:hover {
             background-color: #1976D2;
         }
         .btn-fullscreen {
@@ -271,15 +394,46 @@
     <h1 data-i18n="mainTitle">Трекер Инкарнон Адаптеров</h1>
     <div class="subtitle" data-i18n="subTitle">Интерактивный трекер ресурсов для улучшений оружия</div>
 
+    <!-- Индикатор общего прогресса -->
+    <div class="global-progress-bar">
+        <div class="progress-info">
+            <span id="progressText">Установлено: 0 из 0 (0%)</span>
+            <span id="progressPercent">0%</span>
+        </div>
+        <div class="progress-track">
+            <div class="progress-fill" id="progressFill"></div>
+        </div>
+    </div>
+
+    <!-- Дашборд ресурсов и склада -->
     <div class="dashboard">
-        <h3 data-i18n="dashboardTitle">Общие требования для выбранных (неустановленных) адаптеров</h3>
+        <h3>
+            <span data-i18n="dashboardTitle">Общие требования для не установленных адаптеров</span>
+            <button class="warehouse-toggle-btn" onclick="toggleWarehouse()" data-i18n="warehouseToggle">📦 Мой склад ресурсов</button>
+        </h3>
+        
+        <!-- Склад игрока -->
+        <div class="warehouse-panel" id="warehousePanel">
+            <div style="font-size: 0.9em; color: var(--text-muted); margin-bottom: 8px;" data-i18n="warehouseDesc">Укажи, сколько ресурсов у тебя уже есть. Трекер автоматически вычтет их из общего дефицита:</div>
+            <div class="warehouse-grid" id="warehouseContainer"></div>
+        </div>
+
         <div class="res-totals-grid" id="totalsContainer"></div>
+    </div>
+
+    <!-- Панель фильтров и поиска -->
+    <div class="filters-bar">
+        <input type="text" id="searchInput" class="search-input" placeholder="🔍 Быстрый поиск оружия..." oninput="filterAdapters()" data-i18n-placeholder="searchPlaceholder">
+        <select id="statusFilter" onchange="filterAdapters()">
+            <option value="all" data-i18n="filterAll">Все адаптеры</option>
+            <option value="uninstalled" data-i18n="filterUninstalled">Только не установленные</option>
+            <option value="installed" data-i18n="filterInstalled">Только установленные</option>
+        </select>
     </div>
 
     <div class="controls-bar">
         <button class="btn-fullscreen" id="fullscreenBtn" onclick="toggleFullscreenWidth()">🖥️ На весь экран</button>
-        <button class="btn-export" onclick="exportData()" data-i18n="exportBtn">Экспорт кода</button>
-        <button class="btn-import" onclick="importData()" data-i18n="importBtn">Импорт кода</button>
+        <button class="btn-share" onclick="shareProgressLink()" data-i18n="shareBtn">🔗 Скопировать ссылку на прогресс</button>
         <button onclick="resetAll()" data-i18n="resetBtn">Сбросить все галочки</button>
     </div>
 
@@ -287,65 +441,55 @@
 </div>
 
 <script>
-    /* =========================================================================
-       ПЕРЕВОДЫ ИНТЕРФЕЙСА (UI TRANSLATIONS)
-       ========================================================================= */
     const UI_TEXT = {
         ru: {
             pageTitle: "Трекер Инкарнон Адаптеров (Warframe)",
             mainTitle: "Трекер Инкарнон Адаптеров",
             subTitle: "Интерактивный трекер ресурсов для улучшений оружия",
-            dashboardTitle: "Общие требования для выбранных (неустановленных) адаптеров",
-            exportBtn: "Экспорт кода",
-            importBtn: "Импорт кода",
+            dashboardTitle: "Общие требования для не установленных адаптеров",
+            warehouseToggle: "📦 Мой склад ресурсов",
+            warehouseDesc: "Укажи, сколько ресурсов у тебя уже есть. Трекер автоматически вычтет их из общего дефицита:",
+            shareBtn: "🔗 Скопировать ссылку",
             resetBtn: "Сбросить все галочки",
             installed: "Установлен",
             themeBtn: "Тема",
             fullscreenOn: "🖥️ На весь экран",
             fullscreenOff: "⏹️ Обычный вид",
-            categories: {
-                primary: "Основное",
-                secondary: "Вторичное",
-                melee: "Ближний Бой"
-            },
+            searchPlaceholder: "🔍 Быстрый поиск оружия...",
+            filterAll: "Все адаптеры",
+            filterUninstalled: "Только не установленные",
+            filterInstalled: "Только установленные",
+            categories: { primary: "Основное", secondary: "Вторичное", melee: "Ближний Бой" },
             alerts: {
-                copied: "Код прогресса скопирован в буфер обмена!\n\nКод: ",
-                promptExport: "Вот твой код прогресса (скопируй его вручную):",
-                promptImport: "Вставь сюда код прогресса (hex-строку):",
-                errorImport: "Ошибка: неверный формат кода!",
-                successImport: "Прогресс успешно импортирован!"
+                linkCopied: "Ссылка с вашим прогрессом скопирована в буфер обмена!",
+                successImport: "Прогресс успешно загружен из ссылки!"
             }
         },
         en: {
             pageTitle: "Incarnon Adapter Tracker (Warframe)",
             mainTitle: "Incarnon Adapter Tracker",
             subTitle: "Interactive resource tracker for weapon upgrades",
-            dashboardTitle: "Total requirements for selected (uninstalled) adapters",
-            exportBtn: "Export Code",
-            importBtn: "Import Code",
+            dashboardTitle: "Total requirements for uninstalled adapters",
+            warehouseToggle: "📦 My Resource Warehouse",
+            warehouseDesc: "Enter how many resources you already have. The tracker will subtract them from the total:",
+            shareBtn: "🔗 Copy Link",
             resetBtn: "Reset All Checkboxes",
             installed: "Installed",
             themeBtn: "Theme",
             fullscreenOn: "🖥️ Fullscreen Width",
             fullscreenOff: "⏹️ Normal View",
-            categories: {
-                primary: "Primary",
-                secondary: "Secondary",
-                melee: "Melee"
-            },
+            searchPlaceholder: "🔍 Quick search weapon...",
+            filterAll: "All adapters",
+            filterUninstalled: "Only uninstalled",
+            filterInstalled: "Only installed",
+            categories: { primary: "Primary", secondary: "Secondary", melee: "Melee" },
             alerts: {
-                copied: "Progress code copied to clipboard!\n\nCode: ",
-                promptExport: "Here is your progress code (copy it manually):",
-                promptImport: "Paste your progress code here (hex string):",
-                errorImport: "Error: Invalid code format!",
-                successImport: "Progress successfully imported!"
+                linkCopied: "Progress link copied to clipboard!",
+                successImport: "Progress successfully loaded from link!"
             }
         }
     };
 
-    /* =========================================================================
-       СПИСОК РЕСУРСОВ (RU / EN)
-       ========================================================================= */
     const RESOURCE_NAMES = {
         pathos: { nameRu: "Струбцина Пафоса", nameEn: "Pathos Clamp", img: "https://wiki.warframe.com/images/PathosClamp.png" },
         aggri: { nameRu: "Аггри-Камень", nameEn: "Aggristone", img: "https://wiki.warframe.com/images/Aggristone.png" },
@@ -365,9 +509,6 @@
         rune: { nameRu: "Руническая Сущность", nameEn: "Rune Marrow", img: "https://wiki.warframe.com/images/RuneMarrow.png" }
     };
 
-    /* =========================================================================
-       ДАННЫЕ ОРУЖИЯ (С ПОЛЯМИ nameRu И nameEn)
-       ========================================================================= */
     const categoriesData = [
         {
             categoryKey: "primary",
@@ -441,6 +582,7 @@
         if (isFullscreenWidth) {
             document.getElementById('mainContainer').style.maxWidth = '100%';
         }
+        loadFromURLOrStorage();
     }
 
     function toggleTheme() {
@@ -470,27 +612,26 @@
         
         document.querySelectorAll('[data-i18n]').forEach(el => {
             const key = el.getAttribute('data-i18n');
-            if (t[key]) {
-                el.innerText = t[key];
-            }
+            if (t[key]) el.innerText = t[key];
         });
 
-        // Обновляем текст кнопки полноэкранного режима
+        document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
+            const key = el.getAttribute('data-i18n-placeholder');
+            if (t[key]) el.placeholder = t[key];
+        });
+
         const fsBtn = document.getElementById('fullscreenBtn');
         fsBtn.innerText = isFullscreenWidth ? t.fullscreenOff : t.fullscreenOn;
     }
 
     function getAllAdapterIds() {
         let ids = [];
-        categoriesData.forEach(cat => {
-            cat.adapters.forEach(adapter => {
-                ids.push(adapter.id);
-            });
-        });
+        categoriesData.forEach(cat => cat.adapters.forEach(a => ids.push(a.id)));
         return ids;
     }
 
-    function exportData() {
+    // Сохранение данных в URL Hash и localStorage одновременно
+    function saveState() {
         const ids = getAllAdapterIds();
         let binaryString = "";
         ids.forEach(id => {
@@ -504,43 +645,83 @@
             hexString += parseInt(chunk, 2).toString(16);
         }
 
+        // Записываем в URL без перезагрузки страницы
+        history.replaceState(null, "", "#" + hexString);
+    }
+
+    // Загрузка состояния из URL Hash (приоритет) или из localStorage
+    function loadFromURLOrStorage() {
+        const hash = window.location.hash.replace("#", "").trim();
+        const ids = getAllAdapterIds();
+
+        if (hash.length > 0) {
+            let binaryString = "";
+            for (let i = 0; i < hash.length; i++) {
+                let val = parseInt(hash[i], 16);
+                if (!isNaN(val)) {
+                    binaryString += val.toString(2).padStart(4, "0");
+                }
+            }
+            ids.forEach((id, index) => {
+                const bit = binaryString[index] === "1";
+                localStorage.setItem('incarnon_' + id, bit ? 'true' : 'false');
+            });
+        } else {
+            // Если в URL пусто, проверяем localStorage, если там пусто — инициализируем фолс
+            ids.forEach(id => {
+                if (localStorage.getItem('incarnon_' + id) === null) {
+                    localStorage.setItem('incarnon_' + id, 'false');
+                }
+            });
+        }
+    }
+
+    function shareProgressLink() {
+        saveState();
         const t = UI_TEXT[currentLang].alerts;
-        navigator.clipboard.writeText(hexString).then(() => {
-            alert(t.copied + hexString);
+        navigator.clipboard.writeText(window.location.href).then(() => {
+            alert(t.linkCopied);
         }).catch(err => {
-            prompt(t.promptExport, hexString);
+            prompt("Скопируйте ссылку вручную:", window.location.href);
         });
     }
 
-    function importData() {
-        const t = UI_TEXT[currentLang].alerts;
-        let hexString = prompt(t.promptImport);
-        if (!hexString) return;
+    function toggleWarehouse() {
+        const panel = document.getElementById('warehousePanel');
+        panel.classList.toggle('open');
+    }
 
-        hexString = hexString.trim();
-        let binaryString = "";
+    function renderWarehouseInputs() {
+        const container = document.getElementById('warehouseContainer');
+        container.innerHTML = '';
 
-        for (let i = 0; i < hexString.length; i++) {
-            let val = parseInt(hexString[i], 16);
-            if (isNaN(val)) {
-                alert(t.errorImport);
-                return;
-            }
-            binaryString += val.toString(2).padStart(4, "0");
-        }
+        Object.keys(RESOURCE_NAMES).forEach(resKey => {
+            const res = RESOURCE_NAMES[resKey];
+            const resName = currentLang === 'en' ? res.nameEn : res.nameRu;
+            const currentStock = localStorage.getItem('warehouse_' + resKey) || 0;
 
-        const ids = getAllAdapterIds();
-        ids.forEach((id, index) => {
-            const bit = binaryString[index] === "1";
-            localStorage.setItem('incarnon_' + id, bit ? 'true' : 'false');
+            const div = document.createElement('div');
+            div.className = 'warehouse-item';
+            div.innerHTML = `
+                <div style="display:flex; align-items:center; gap:6px; overflow:hidden;">
+                    <img src="${res.img}" style="width:18px; height:18px; object-fit:contain;" alt="">
+                    <span style="font-size:0.85em; white-space:nowrap; text-overflow:ellipsis; overflow:hidden;" title="${resName}">${resName}</span>
+                </div>
+                <input type="number" min="0" value="${currentStock}" onchange="updateWarehouseStock('${resKey}', this.value)">
+            `;
+            container.appendChild(div);
         });
+    }
 
-        renderApp();
-        alert(t.successImport);
+    function updateWarehouseStock(resKey, val) {
+        const num = Math.max(0, parseInt(val) || 0);
+        localStorage.setItem('warehouse_' + resKey, num);
+        updateTotals();
     }
 
     function renderApp() {
         applyTranslations();
+        renderWarehouseInputs();
         const container = document.getElementById('categoriesContainer');
         container.innerHTML = '';
         const t = UI_TEXT[currentLang];
@@ -548,7 +729,6 @@
         categoriesData.forEach(cat => {
             const section = document.createElement('div');
             section.className = 'category-section';
-            
             const catTitle = t.categories[cat.categoryKey] || cat.categoryKey;
             
             let gridHtml = `<div class="adapter-grid">`;
@@ -571,7 +751,7 @@
                 }
 
                 gridHtml += `
-                    <div class="adapter-card ${isChecked ? 'completed' : ''}" id="card_${adapter.id}">
+                    <div class="adapter-card ${isChecked ? 'completed' : ''}" id="card_${adapter.id}" data-name="${weaponName.toLowerCase()}" data-checked="${isChecked}">
                         <div class="adapter-content">
                             <img src="${adapter.img}" class="weapon-img" alt="">
                             <div class="adapter-details">
@@ -591,11 +771,12 @@
             });
             gridHtml += `</div>`;
 
-            section.innerHTML = `<h2>${catTitle}</h2>` + gridHtml;
+            section.innerHTML = `<h2><span>${catTitle}</span></h2>` + gridHtml;
             container.appendChild(section);
         });
 
         updateTotals();
+        filterAdapters();
     }
 
     function toggleAdapter(id) {
@@ -605,11 +786,16 @@
         if (checkbox.checked) {
             localStorage.setItem('incarnon_' + id, 'true');
             card.classList.add('completed');
+            card.setAttribute('data-checked', 'true');
         } else {
             localStorage.setItem('incarnon_' + id, 'false');
             card.classList.remove('completed');
+            card.setAttribute('data-checked', 'false');
         }
+        saveState();
         updateTotals();
+        updateGlobalProgress();
+        filterAdapters();
     }
 
     function resetAll() {
@@ -618,25 +804,62 @@
                 localStorage.setItem('incarnon_' + adapter.id, 'false');
             });
         });
+        saveState();
         renderApp();
+    }
+
+    function filterAdapters() {
+        const query = document.getElementById('searchInput').value.toLowerCase().trim();
+        const status = document.getElementById('statusFilter').value;
+
+        const cards = document.querySelectorAll('.adapter-card');
+        cards.forEach(card => {
+            const name = card.getAttribute('data-name');
+            const isChecked = card.getAttribute('data-checked') === 'true';
+
+            let matchesSearch = name.includes(query);
+            let matchesStatus = true;
+
+            if (status === 'uninstalled') matchesStatus = !isChecked;
+            if (status === 'installed') matchesStatus = isChecked;
+
+            if (matchesSearch && matchesStatus) {
+                card.classList.remove('hidden');
+            } else {
+                card.classList.add('hidden');
+            }
+        });
+    }
+
+    function updateGlobalProgress() {
+        const ids = getAllAdapterIds();
+        let total = ids.length;
+        let completed = 0;
+
+        ids.forEach(id => {
+            if (localStorage.getItem('incarnon_' + id) === 'true') {
+                completed++;
+            }
+        });
+
+        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+        const t = currentLang === 'en' ? `Installed: ${completed} of ${total} (${percent}%)` : `Установлено: ${completed} из ${total} (${percent}%)`;
+
+        document.getElementById('progressText').innerText = t;
+        document.getElementById('progressPercent').innerText = percent + '%';
+        document.getElementById('progressFill').style.width = percent + '%';
     }
 
     function updateTotals() {
         const totals = {};
-        Object.keys(RESOURCE_NAMES).forEach(key => {
-            totals[key] = 0;
-        });
+        Object.keys(RESOURCE_NAMES).forEach(key => { totals[key] = 0; });
 
         categoriesData.forEach(cat => {
             cat.adapters.forEach(adapter => {
                 const isChecked = localStorage.getItem('incarnon_' + adapter.id) === 'true';
                 if (!isChecked) {
                     for (let [resKey, amount] of Object.entries(adapter.costs)) {
-                        if (totals[resKey] !== undefined) {
-                            totals[resKey] += amount;
-                        } else {
-                            totals[resKey] = (totals[resKey] || 0) + amount;
-                        }
+                        totals[resKey] = (totals[resKey] || 0) + amount;
                     }
                 }
             });
@@ -649,18 +872,33 @@
             if (totalAmount > 0) {
                 const res = RESOURCE_NAMES[resKey] || { nameRu: resKey, nameEn: resKey, img: '' };
                 const resName = currentLang === 'en' ? res.nameEn : res.nameRu;
+                const stock = parseInt(localStorage.getItem('warehouse_' + resKey)) || 0;
+                const deficit = Math.max(0, totalAmount - stock);
+
                 const item = document.createElement('div');
                 item.className = 'res-total-item';
+                
+                let countsHtml = `<span class="res-count-main">${deficit.toLocaleString()}</span>`;
+                if (stock > 0) {
+                    countsHtml = `
+                        <div class="res-counts">
+                            <div class="res-count-main" style="color: ${deficit === 0 ? '#4CAF50' : 'var(--accent)'}">${deficit === 0 ? 'Хватает!' : deficit.toLocaleString()}</div>
+                            <div class="res-count-sub">Всего: ${totalAmount.toLocaleString()} | На складе: ${stock.toLocaleString()}</div>
+                        </div>
+                    `;
+                }
+
                 item.innerHTML = `
                     <div class="res-info-wrapper">
                         <img src="${res.img}" class="res-icon" alt="">
                         <span class="res-name">${resName}</span>
                     </div>
-                    <span class="res-count">${totalAmount.toLocaleString()}</span>
+                    ${countsHtml}
                 `;
                 totalsContainer.appendChild(item);
             }
         }
+        updateGlobalProgress();
     }
 
     window.onload = () => {

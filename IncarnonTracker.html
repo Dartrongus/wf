@@ -17,6 +17,7 @@
             --text-muted: #999;
             --border: #333;
             --max-width: 1300px;
+            --font-scale: 1rem;
         }
 
         [data-theme="light"] {
@@ -37,7 +38,8 @@
             color: var(--text-main);
             margin: 0;
             padding: 20px;
-            transition: background-color 0.3s, color 0.3s;
+            font-size: var(--font-scale);
+            transition: background-color 0.3s, color 0.3s, font-size 0.3s;
         }
         .container {
             max-width: var(--max-width);
@@ -50,6 +52,7 @@
             gap: 10px;
             margin-bottom: 15px;
             flex-wrap: wrap;
+            align-items: center;
         }
         h1 {
             text-align: center;
@@ -281,6 +284,10 @@
             margin-bottom: 25px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
             border: 1px solid var(--border);
+            transition: all 0.3s ease;
+        }
+        .category-section.hidden {
+            display: none !important;
         }
         h2 {
             color: var(--warning);
@@ -297,6 +304,17 @@
             gap: 15px;
             margin-top: 15px;
         }
+        
+        /* Анимация подпрыгивания карточки при клике */
+        @keyframes cardBounce {
+            0% { transform: translateY(0); }
+            50% { transform: translateY(-4px); }
+            100% { transform: translateY(0); }
+        }
+        .adapter-card.bounce {
+            animation: cardBounce 0.3s ease;
+        }
+
         .adapter-card {
             background: var(--card-sub);
             border-left: 4px solid var(--accent);
@@ -452,12 +470,65 @@
             background-color: #c62828;
             color: white;
         }
+
+        /* Плавающая кнопка «Наверх» */
+        .back-to-top {
+            position: fixed;
+            bottom: 25px;
+            right: 25px;
+            background: var(--accent);
+            color: #121212;
+            width: 45px;
+            height: 45px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            font-weight: bold;
+            box-align: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
+            cursor: pointer;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.3s, visibility 0.3s, background-color 0.2s;
+            z-index: 1000;
+            border: none;
+        }
+        .back-to-top.visible {
+            opacity: 1;
+            visibility: visible;
+        }
+        .back-to-top:hover {
+            background: var(--accent-hover);
+            color: #fff;
+        }
+
+        /* Кнопка сброса фильтров внутри поиска */
+        .search-reset-inline {
+            position: absolute;
+            right: 35px;
+            background: transparent;
+            border: none;
+            color: var(--warning);
+            cursor: pointer;
+            font-size: 0.85em;
+            font-weight: bold;
+            display: none;
+            padding: 0 5px;
+        }
     </style>
 </head>
 <body data-theme="dark">
 
 <div class="container" id="mainContainer">
     <div class="top-settings-bar">
+        <!-- Переключатель размера шрифта -->
+        <select id="fontSizeSelect" onchange="changeFontSize(this.value)">
+            <option value="1rem" data-i18n="fontNormal">А Шрифт: Обычный</option>
+            <option value="1.15rem" data-i18n="fontLarge">А+ Крупный</option>
+            <option value="1.3rem" data-i18n="fontMax">А++ Максимальный</option>
+        </select>
         <select id="langSelect" onchange="changeLanguage(this.value)">
             <option value="ru">Русский</option>
             <option value="en">English</option>
@@ -492,7 +563,7 @@
         <div class="warehouse-panel" id="warehousePanel">
             <div class="warehouse-header-row">
                 <div style="font-size: 0.9em; color: var(--text-muted);" data-i18n="warehouseDesc">Укажи, сколько ресурсов у тебя уже есть. Трекер автоматически вычтет их из общего дефицита:</div>
-                <button class="btn-small-danger" onclick="resetWarehouse()" data-i18n="resetWarehouseBtn">Сбросить склад</button>
+                <button class="btn-small-danger" onclick="resetWarehouseWithConfirm()" data-i18n="resetWarehouseBtn">Сбросить склад</button>
             </div>
             <div class="warehouse-grid" id="warehouseContainer"></div>
         </div>
@@ -503,6 +574,7 @@
     <div class="filters-bar">
         <div class="search-wrapper">
             <input type="text" id="searchInput" class="search-input" placeholder="🔍 Быстрый поиск оружия..." oninput="handleSearchInput()" data-i18n-placeholder="searchPlaceholder">
+            <button id="searchResetInline" class="search-reset-inline" onclick="resetAllFilters()" title="Сбросить фильтры" data-i18n="searchResetBtn">Сбросить</button>
             <button id="searchClearBtn" class="search-clear-btn" onclick="clearSearch()" title="Сбросить поиск">✕</button>
         </div>
         <select id="statusFilter" onchange="filterAdapters()">
@@ -517,11 +589,14 @@
         <button class="btn-export" onclick="exportToExcelCSV()">📊 <span data-i18n="exportExcelBtn">Экспорт в Excel (CSV)</span></button>
         <button class="btn-fullscreen" id="fullscreenBtn" onclick="toggleFullscreenWidth()">🖥️ На весь экран</button>
         <button class="btn-share" onclick="shareProgressLink()" data-i18n="shareBtn">🔗 Скопировать ссылку на прогресс</button>
-        <button onclick="resetAll()" data-i18n="resetBtn">Сбросить все галочки</button>
+        <button onclick="resetAllWithConfirm()" data-i18n="resetBtn">Сбросить все галочки</button>
     </div>
 
     <div id="categoriesContainer"></div>
 </div>
+
+<!-- Плавающая кнопка Наверх -->
+<button class="back-to-top" id="backToTopBtn" onclick="scrollToTop()" title="Наверх">↑</button>
 
 <script>
     const UI_TEXT = {
@@ -543,6 +618,10 @@
             fullscreenOn: "🖥️ На весь экран",
             fullscreenOff: "⏹️ Обычный вид",
             searchPlaceholder: "🔍 Быстрый поиск оружия...",
+            searchResetBtn: "Сбросить",
+            fontNormal: "А Шрифт: Обычный",
+            fontLarge: "А+ Крупный",
+            fontMax: "А++ Максимальный",
             filterAll: "Все адаптеры",
             filterUninstalled: "Только не установленные",
             filterInstalled: "Только установленные",
@@ -553,6 +632,8 @@
             currentBadgeText: "Доступно сейчас",
             categories: { primary: "Основное", secondary: "Вторичное", melee: "Ближний Бой" },
             csvHeaders: ["Категория", "Оружие", "Установлен", "Ресурсы и количество"],
+            confirmResetAll: "Вы уверены, что хотите сбросить весь прогресс (все галочки)?",
+            confirmResetWarehouse: "Вы уверены, что хотите обнулить весь склад ресурсов?",
             alerts: {
                 linkCopied: "Ссылка с вашим прогрессом скопирована в буфер обмена!",
             }
@@ -575,6 +656,10 @@
             fullscreenOn: "🖥️ Fullscreen Width",
             fullscreenOff: "⏹️ Normal View",
             searchPlaceholder: "🔍 Quick search weapon...",
+            searchResetBtn: "Reset",
+            fontNormal: "A Font: Normal",
+            fontLarge: "A+ Large",
+            fontMax: "A++ Maximum",
             filterAll: "All adapters",
             filterUninstalled: "Only uninstalled",
             filterInstalled: "Only installed",
@@ -585,6 +670,8 @@
             currentBadgeText: "Available Now",
             categories: { primary: "Primary", secondary: "Secondary", melee: "Melee" },
             csvHeaders: ["Category", "Weapon", "Installed", "Resources and Quantities"],
+            confirmResetAll: "Are you sure you want to reset all progress (all checkboxes)?",
+            confirmResetWarehouse: "Are you sure you want to reset your resource warehouse?",
             alerts: {
                 linkCopied: "Progress link copied to clipboard!",
             }
@@ -702,10 +789,13 @@
     let currentLang = localStorage.getItem('incarnon_lang') || 'ru';
     let currentTheme = localStorage.getItem('incarnon_theme') || 'dark';
     let isFullscreenWidth = localStorage.getItem('incarnon_fullscreen') === 'true';
+    let currentFontSize = localStorage.getItem('incarnon_fontsize') || '1rem';
 
     function initSettings() {
         document.getElementById('langSelect').value = currentLang;
+        document.getElementById('fontSizeSelect').value = currentFontSize;
         document.body.setAttribute('data-theme', currentTheme);
+        document.documentElement.style.setProperty('--font-scale', currentFontSize);
         if (isFullscreenWidth) {
             document.getElementById('mainContainer').style.maxWidth = '100%';
         }
@@ -716,6 +806,12 @@
         currentTheme = currentTheme === 'dark' ? 'light' : 'dark';
         document.body.setAttribute('data-theme', currentTheme);
         localStorage.setItem('incarnon_theme', currentTheme);
+    }
+
+    function changeFontSize(size) {
+        currentFontSize = size;
+        document.documentElement.style.setProperty('--font-scale', size);
+        localStorage.setItem('incarnon_fontsize', size);
     }
 
     function toggleFullscreenWidth() {
@@ -904,12 +1000,15 @@
         updateTotals();
     }
 
-    function resetWarehouse() {
-        Object.keys(RESOURCE_NAMES).forEach(resKey => {
-            localStorage.setItem('warehouse_' + resKey, '0');
-        });
-        renderWarehouseInputs();
-        updateTotals();
+    function resetWarehouseWithConfirm() {
+        const t = UI_TEXT[currentLang];
+        if (confirm(t.confirmResetWarehouse)) {
+            Object.keys(RESOURCE_NAMES).forEach(resKey => {
+                localStorage.setItem('warehouse_' + resKey, '0');
+            });
+            renderWarehouseInputs();
+            updateTotals();
+        }
     }
 
     function handleSearchInput() {
@@ -931,6 +1030,13 @@
         input.focus();
     }
 
+    function resetAllFilters() {
+        document.getElementById('searchInput').value = '';
+        document.getElementById('statusFilter').value = 'all';
+        document.getElementById('searchClearBtn').style.display = 'none';
+        filterAdapters();
+    }
+
     function renderApp() {
         applyTranslations();
         renderWarehouseInputs();
@@ -942,6 +1048,7 @@
         categoriesData.forEach(cat => {
             const section = document.createElement('div');
             section.className = 'category-section';
+            section.id = `section_${cat.categoryKey}`;
             const catTitle = t.categories[cat.categoryKey] || cat.categoryKey;
             
             let gridHtml = `<div class="adapter-grid">`;
@@ -1000,6 +1107,10 @@
         const checkbox = document.querySelector(`#card_${id} input[type="checkbox"]`);
         const card = document.getElementById(`card_${id}`);
         
+        card.classList.remove('bounce');
+        void card.offsetWidth; 
+        card.classList.add('bounce');
+
         if (checkbox.checked) {
             localStorage.setItem('incarnon_' + id, 'true');
             card.classList.add('completed');
@@ -1015,37 +1126,62 @@
         filterAdapters();
     }
 
-    function resetAll() {
-        categoriesData.forEach(cat => {
-            cat.adapters.forEach(adapter => {
-                localStorage.setItem('incarnon_' + adapter.id, 'false');
+    function resetAllWithConfirm() {
+        const t = UI_TEXT[currentLang];
+        if (confirm(t.confirmResetAll)) {
+            categoriesData.forEach(cat => {
+                cat.adapters.forEach(adapter => {
+                    localStorage.setItem('incarnon_' + adapter.id, 'false');
+                });
             });
-        });
-        saveState();
-        renderApp();
+            saveState();
+            renderApp();
+        }
     }
 
     function filterAdapters() {
         const query = document.getElementById('searchInput').value.toLowerCase().trim();
         const status = document.getElementById('statusFilter').value;
+        const searchResetInline = document.getElementById('searchResetInline');
 
-        const cards = document.querySelectorAll('.adapter-card');
-        cards.forEach(card => {
-            const name = card.getAttribute('data-name');
-            const isChecked = card.getAttribute('data-checked') === 'true';
-            const isCurrent = card.getAttribute('data-current') === 'true';
+        if (query.length > 0 || status !== 'all') {
+            searchResetInline.style.display = 'block';
+        } else {
+            searchResetInline.style.display = 'none';
+        }
 
-            let matchesSearch = name.includes(query);
-            let matchesStatus = true;
+        let totalVisibleCardsAll = 0;
 
-            if (status === 'uninstalled') matchesStatus = !isChecked;
-            if (status === 'installed') matchesStatus = isChecked;
-            if (status === 'current') matchesStatus = isCurrent;
+        categoriesData.forEach(cat => {
+            const section = document.getElementById(`section_${cat.categoryKey}`);
+            const cards = section.querySelectorAll('.adapter-card');
+            let visibleCountInCategory = 0;
 
-            if (matchesSearch && matchesStatus) {
-                card.classList.remove('hidden');
+            cards.forEach(card => {
+                const name = card.getAttribute('data-name');
+                const isChecked = card.getAttribute('data-checked') === 'true';
+                const isCurrent = card.getAttribute('data-current') === 'true';
+
+                let matchesSearch = name.includes(query);
+                let matchesStatus = true;
+
+                if (status === 'uninstalled') matchesStatus = !isChecked;
+                if (status === 'installed') matchesStatus = isChecked;
+                if (status === 'current') matchesStatus = isCurrent;
+
+                if (matchesSearch && matchesStatus) {
+                    card.classList.remove('hidden');
+                    visibleCountInCategory++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            if (visibleCountInCategory === 0) {
+                section.classList.add('hidden');
             } else {
-                card.classList.add('hidden');
+                section.classList.remove('hidden');
+                totalVisibleCardsAll += visibleCountInCategory;
             }
         });
     }
@@ -1124,6 +1260,19 @@
             }
         }
         updateGlobalProgress();
+    }
+
+    window.addEventListener('scroll', () => {
+        const topBtn = document.getElementById('backToTopBtn');
+        if (window.scrollY > 300) {
+            topBtn.classList.add('visible');
+        } else {
+            topBtn.classList.remove('visible');
+        }
+    });
+
+    function scrollToTop() {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
     window.onload = () => {

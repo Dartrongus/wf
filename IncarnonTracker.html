@@ -1256,7 +1256,7 @@
         });
 
         const totalsContainer = document.getElementById('totalsContainer');
-        totalsContainer.totalsContainer = '';
+        totalsContainer.innerHTML = '';
 
         const t = UI_TEXT[currentLang];
 
@@ -1279,7 +1279,7 @@
                     countsHtml = `
                         <div class="res-counts">
                             <div class="res-count-main" style="color: ${deficit === 0 ? '#4CAF50' : 'var(--accent)'}">${deficit === 0 ? t.warehouseEnough : deficit.toLocaleString()}</div>
-                            <div class="subText">${subText}</div>
+                            <div class="res-count-sub">${subText}</div>
                         </div>
                     `;
                 }

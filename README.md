@@ -1,6 +1,6 @@
 # Warframe Incarnon Tracker
 
-[**Трекер Инкарнон Адаптеров**](https://dartrongus.github.io/wf/IncarnonTracker.html)
+[**Трекер Инкарнон Адаптеров / Incarnon Adapter Tracker**](https://dartrongus.github.io/wf/IncarnonTracker.html)
 
 >Трекет установленных инкарнон адаптеров и ресурсов для их установки.
 

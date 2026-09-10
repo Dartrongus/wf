@@ -18,6 +18,8 @@
             --border: #333;
             --max-width: 1300px;
             --font-scale: 1rem;
+            --green-ready: #22c55e;
+            --green-glow: rgba(34, 197, 94, 0.25);
         }
 
         [data-theme="light"] {
@@ -30,6 +32,8 @@
             --text-main: #212121;
             --text-muted: #666;
             --border: #dcdcdc;
+            --green-ready: #16a34a;
+            --green-glow: rgba(22, 163, 74, 0.2);
         }
 
         body {
@@ -315,12 +319,18 @@
             animation: cardBounce 0.3s ease;
         }
 
+        /* Пульсация зелёной рамки */
+        @keyframes greenPulse {
+            0%, 100% { box-shadow: 0 0 10px var(--green-glow), 0 0 25px rgba(34,197,94,0.08); }
+            50% { box-shadow: 0 0 16px rgba(34,197,94,0.35), 0 0 35px rgba(34,197,94,0.12); }
+        }
+
         .adapter-card {
             background: var(--card-sub);
             border-left: 4px solid var(--accent);
             padding: 15px;
             border-radius: 6px;
-            transition: opacity 0.2s, border-color 0.2s, transform 0.2s;
+            transition: opacity 0.2s, border-color 0.2s, transform 0.2s, box-shadow 0.3s, border 0.3s;
             position: relative;
         }
         .adapter-card.current-week {
@@ -345,6 +355,19 @@
             opacity: 0.5;
             border-left-color: #555;
         }
+
+        /* ===== ЗЕЛЁНАЯ РАМКА: обе кнопки активны ===== */
+        .adapter-card.both-active {
+            opacity: 1 !important;
+            border: 1.5px solid var(--green-ready);
+            border-left: 4px solid var(--green-ready);
+            animation: greenPulse 2.5s ease-in-out infinite;
+        }
+        .adapter-card.both-active.current-week {
+            border-color: var(--green-ready);
+            border-left-color: var(--green-ready);
+        }
+
         .adapter-content {
             display: flex;
             gap: 15px;
@@ -369,25 +392,93 @@
             margin-bottom: 8px;
             border-bottom: 1px solid var(--border);
             padding-bottom: 6px;
+            gap: 8px;
+            flex-wrap: wrap;
         }
         .adapter-title {
             font-weight: bold;
             font-size: 1em;
             color: var(--text-main);
         }
-        .checkbox-label {
+
+        /* ===== СВЕТЯЩИЕСЯ КНОПКИ-ИНДИКАТОРЫ ===== */
+        .adapter-toggles {
             display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+        }
+        .glow-btn {
+            display: inline-flex;
             align-items: center;
+            gap: 5px;
+            padding: 4px 10px;
+            font-size: 0.75em;
+            font-weight: 600;
+            letter-spacing: 0.3px;
+            color: var(--text-muted);
+            background: var(--card-bg);
+            border: 1.5px solid var(--border);
+            border-radius: 5px;
             cursor: pointer;
-            font-size: 0.85em;
-            color: var(--accent);
             user-select: none;
+            transition: all 0.25s ease;
+            outline: none;
+            font-family: inherit;
+            white-space: nowrap;
         }
-        .checkbox-label input {
-            margin-right: 4px;
-            transform: scale(1.1);
-            cursor: pointer;
+        .glow-btn:focus-visible {
+            outline: 2px solid var(--accent);
+            outline-offset: 2px;
         }
+        /* Точка-индикатор */
+        .glow-btn .dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: var(--border);
+            transition: all 0.25s ease;
+            flex-shrink: 0;
+        }
+        /* Hover на выключенной */
+        .glow-btn:not(.active):hover {
+            border-color: #555;
+            background: #333;
+        }
+        [data-theme="light"] .glow-btn:not(.active):hover {
+            background: #e8e8e8;
+            border-color: #aaa;
+        }
+
+        /* — Установлен: активен (циан) — */
+        .glow-btn.installed:not(.active):hover .dot {
+            background: rgba(0, 188, 212, 0.45);
+        }
+        .glow-btn.installed.active {
+            color: #0e1c1f;
+            background: var(--accent);
+            border-color: var(--accent);
+            box-shadow: 0 0 8px rgba(0,188,212,0.45), 0 0 18px rgba(0,188,212,0.15);
+        }
+        .glow-btn.installed.active .dot {
+            background: #0e1c1f;
+            box-shadow: 0 0 4px rgba(14,28,31,0.4);
+        }
+
+        /* — Получен: активен (оранж) — */
+        .glow-btn.received:not(.active):hover .dot {
+            background: rgba(255, 152, 0, 0.45);
+        }
+        .glow-btn.received.active {
+            color: #1a1000;
+            background: var(--warning);
+            border-color: var(--warning);
+            box-shadow: 0 0 8px rgba(255,152,0,0.45), 0 0 18px rgba(255,152,0,0.15);
+        }
+        .glow-btn.received.active .dot {
+            background: #1a1000;
+            box-shadow: 0 0 4px rgba(26,16,0,0.4);
+        }
+
         ul {
             margin: 0;
             padding-left: 0;
@@ -523,7 +614,6 @@
 
 <div class="container" id="mainContainer">
     <div class="top-settings-bar">
-        <!-- Переключатель размера шрифта -->
         <select id="fontSizeSelect" onchange="changeFontSize(this.value)">
             <option value="1rem" data-i18n="fontNormal">А Шрифт: Обычный</option>
             <option value="1.15rem" data-i18n="fontLarge">А+ Крупный</option>
@@ -595,7 +685,6 @@
     <div id="categoriesContainer"></div>
 </div>
 
-<!-- Плавающая кнопка Наверх -->
 <button class="back-to-top" id="backToTopBtn" onclick="scrollToTop()" title="Наверх">↑</button>
 
 <script>
@@ -612,6 +701,7 @@
             exportExcelBtn: "Экспорт в Excel (CSV)",
             resetBtn: "Сбросить все галочки",
             installed: "Установлен",
+            received: "Получен",
             yes: "Да",
             no: "Нет",
             themeBtn: "Тема",
@@ -631,7 +721,7 @@
             currentWeekLabel: "⚡ Текущая неделя {week}:",
             currentBadgeText: "Доступно сейчас",
             categories: { primary: "Основное", secondary: "Вторичное", melee: "Ближний Бой" },
-            csvHeaders: ["Категория", "Оружие", "Установлен", "Ресурсы и количество"],
+            csvHeaders: ["Категория", "Оружие", "Установлен", "Получен", "Ресурсы и количество"],
             confirmResetAll: "Вы уверены, что хотите сбросить весь прогресс (все галочки)?",
             confirmResetWarehouse: "Вы уверены, что хотите обнулить весь склад ресурсов?",
             alerts: {
@@ -650,6 +740,7 @@
             exportExcelBtn: "Export to Excel (CSV)",
             resetBtn: "Reset All Checkboxes",
             installed: "Installed",
+            received: "Received",
             yes: "Yes",
             no: "No",
             themeBtn: "Theme",
@@ -669,7 +760,7 @@
             currentWeekLabel: "⚡ Current Week {week} Rotation:",
             currentBadgeText: "Available Now",
             categories: { primary: "Primary", secondary: "Secondary", melee: "Melee" },
-            csvHeaders: ["Category", "Weapon", "Installed", "Resources and Quantities"],
+            csvHeaders: ["Category", "Weapon", "Installed", "Received", "Resources and Quantities"],
             confirmResetAll: "Are you sure you want to reset all progress (all checkboxes)?",
             confirmResetWarehouse: "Are you sure you want to reset your resource warehouse?",
             alerts: {
@@ -678,20 +769,6 @@
         }
     };
 
-    /* ==========================================================================
-       ПОДСКАЗКА 1: КАК ДОБАВЛЯТЬ НОВЫЕ НЕДЕЛИ В РОТАЦИЮ
-       --------------------------------------------------------------------------
-       1. Массив `incarnonRotationWeeks` содержит списки недель (от первой до последней).
-          Каждая строка (массив в квадратных скобках `[...]`) — это отдельная неделя ротации.
-          Внутри указаны ID оружия (например, `"braton"`, `"lato"` и т.д.).
-       2. Если разработчики Warframe добавят новую неделю (или изменят порядок):
-          - Добавьте новый массив с набором ID оружия внутрь `incarnonRotationWeeks`, 
-            например: `["новое_оружие_1", "новое_оружие_2", ...]`.
-          - Обязательно обновите массив букв `weekLetters` внутри функции `getCurrentIncarnonRotation()`,
-            чтобы количество букв ( ['A', 'B', 'C', ...] ) совпадало с общим количеством недель в ротации.
-          - Измените число `9` в расчетах (остаток от деления `% 9` и т.д.) на новое суммарное 
-            количество недель в ротации.
-       ========================================================================== */
     const incarnonRotationWeeks = [
         ["braton", "lato", "skana", "paris", "kunai"],
         ["boar", "gammacor", "angstrum", "gorgon", "anku"],
@@ -704,34 +781,13 @@
         ["vectis", "stug", "ballistica", "destreza", "obex"]
     ];
 
-    /* ==========================================================================
-       ПОДСКАЗКА 2: КАК ИЗМЕНИТЬ ВРЕМЯ И ДАТУ СМЕНЫ РОТАЦИИ
-       --------------------------------------------------------------------------
-       1. Функция `getCurrentIncarnonRotation()` высчитывает текущую неделю по разнице 
-          времени между текущим моментом и опорной точкой (`anchorDate`).
-       2. Переменная `anchorDate` задается через `Date.UTC(Год, Месяц_с_нуля, День, Час, Минуты, Секунды)`:
-          - Внимание: месяцы в JavaScript считаются с нуля (январь = 0, февраль = 1, ..., август = 7).
-          - Часы указываются по Всемирному координированному времени (UTC). 
-            Пример: если ротация меняется в понедельник в 3:00 утра по московскому времени (MSK, UTC+3), 
-            то по UTC это будет в 0:00 часов ночи понедельника.
-       3. Если в будущем время или день смены ротации изменится:
-          - Измените параметры в `Date.UTC(...)` на точную известную дату и время (в UTC), 
-            когда гарантированно шла конкретная неделя (индекс которой совпадает с порядком в массиве выше).
-          - Если изменился общий цикл (например, стал не 9 недель, а больше), не забудьте скорректировать 
-            формулу деления (`% 9`) на новое число недель.
-       ========================================================================== */
     function getCurrentIncarnonRotation() {
-        // Опорная дата: 24 августа 2026 года, 00:00 UTC (соответствует 3:00 утра по МСК)
         const anchorDate = Date.UTC(2026, 7, 24, 0, 0, 0); 
         const now = new Date();
         const nowUTC = Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate(), now.getUTCHours(), now.getUTCMinutes());
         const diffMs = nowUTC - anchorDate;
         const diffWeeks = Math.floor(diffMs / (1000 * 60 * 60 * 24 * 7));
-        
-        // Цикл из 9 недель (если недель станет больше, измените цифру 9 на актуальное число)
         let currentWeekIndex = (8 + (diffWeeks % 9)) % 9;
-        
-        // Буквенное обозначение недель (количество букв должно соответствовать количеству недель в цикле)
         const weekLetters = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H', 'I'];
         return {
             letter: weekLetters[currentWeekIndex],
@@ -909,21 +965,33 @@
         return ids;
     }
 
+    /* Сохранение состояния: формат #installedHex|receivedHex */
     function saveState() {
         const ids = getAllAdapterIds();
-        let binaryString = "";
-        ids.forEach(id => {
-            const isChecked = localStorage.getItem('incarnon_' + id) === 'true';
-            binaryString += isChecked ? "1" : "0";
-        });
 
-        let hexString = "";
-        for (let i = 0; i < binaryString.length; i += 4) {
-            let chunk = binaryString.substr(i, 4).padEnd(4, "0");
-            hexString += parseInt(chunk, 2).toString(16);
+        // Installed bits
+        let binInstalled = "";
+        ids.forEach(id => {
+            binInstalled += localStorage.getItem('incarnon_' + id) === 'true' ? "1" : "0";
+        });
+        let hexInstalled = "";
+        for (let i = 0; i < binInstalled.length; i += 4) {
+            let chunk = binInstalled.substr(i, 4).padEnd(4, "0");
+            hexInstalled += parseInt(chunk, 2).toString(16);
         }
 
-        history.replaceState(null, "", "#" + hexString);
+        // Received bits
+        let binReceived = "";
+        ids.forEach(id => {
+            binReceived += localStorage.getItem('incarnon_recv_' + id) === 'true' ? "1" : "0";
+        });
+        let hexReceived = "";
+        for (let i = 0; i < binReceived.length; i += 4) {
+            let chunk = binReceived.substr(i, 4).padEnd(4, "0");
+            hexReceived += parseInt(chunk, 2).toString(16);
+        }
+
+        history.replaceState(null, "", "#" + hexInstalled + "|" + hexReceived);
     }
 
     function loadFromURLOrStorage() {
@@ -931,21 +999,50 @@
         const ids = getAllAdapterIds();
 
         if (hash.length > 0) {
-            let binaryString = "";
-            for (let i = 0; i < hash.length; i++) {
-                let val = parseInt(hash[i], 16);
-                if (!isNaN(val)) {
-                    binaryString += val.toString(2).padStart(4, "0");
-                }
+            const parts = hash.split("|");
+            const hexInstalled = parts[0] || "";
+            const hexReceived = parts[1] || "";
+
+            // Parse installed
+            let binInstalled = "";
+            for (let i = 0; i < hexInstalled.length; i++) {
+                let val = parseInt(hexInstalled[i], 16);
+                if (!isNaN(val)) binInstalled += val.toString(2).padStart(4, "0");
             }
             ids.forEach((id, index) => {
-                const bit = binaryString[index] === "1";
-                localStorage.setItem('incarnon_' + id, bit ? 'true' : 'false');
+                const bit = binInstalled[index] === "1";
+                if (localStorage.getItem('incarnon_' + id) === null) {
+                    localStorage.setItem('incarnon_' + id, bit ? 'true' : 'false');
+                }
             });
+
+            // Parse received
+            if (hexReceived.length > 0) {
+                let binReceived = "";
+                for (let i = 0; i < hexReceived.length; i++) {
+                    let val = parseInt(hexReceived[i], 16);
+                    if (!isNaN(val)) binReceived += val.toString(2).padStart(4, "0");
+                }
+                ids.forEach((id, index) => {
+                    const bit = binReceived[index] === "1";
+                    if (localStorage.getItem('incarnon_recv_' + id) === null) {
+                        localStorage.setItem('incarnon_recv_' + id, bit ? 'true' : 'false');
+                    }
+                });
+            } else {
+                ids.forEach(id => {
+                    if (localStorage.getItem('incarnon_recv_' + id) === null) {
+                        localStorage.setItem('incarnon_recv_' + id, 'false');
+                    }
+                });
+            }
         } else {
             ids.forEach(id => {
                 if (localStorage.getItem('incarnon_' + id) === null) {
                     localStorage.setItem('incarnon_' + id, 'false');
+                }
+                if (localStorage.getItem('incarnon_recv_' + id) === null) {
+                    localStorage.setItem('incarnon_recv_' + id, 'false');
                 }
             });
         }
@@ -964,15 +1061,16 @@
     function exportToExcelCSV() {
         const t = UI_TEXT[currentLang];
         let csvContent = "\uFEFF";
-        
         csvContent += t.csvHeaders.join(";") + "\n";
 
         categoriesData.forEach(cat => {
             const catName = t.categories[cat.categoryKey];
             cat.adapters.forEach(adapter => {
-                const isChecked = localStorage.getItem('incarnon_' + adapter.id) === 'true';
+                const isInstalled = localStorage.getItem('incarnon_' + adapter.id) === 'true';
+                const isReceived = localStorage.getItem('incarnon_recv_' + adapter.id) === 'true';
                 const weaponName = currentLang === 'en' ? adapter.nameEn : adapter.nameRu;
-                const statusStr = isChecked ? t.yes : t.no;
+                const installedStr = isInstalled ? t.yes : t.no;
+                const receivedStr = isReceived ? t.yes : t.no;
 
                 let costsParts = [];
                 for (let [resKey, amount] of Object.entries(adapter.costs)) {
@@ -985,7 +1083,8 @@
                 const row = [
                     `"${catName}"`,
                     `"${weaponName.replace(/"/g, '""')}"`,
-                    `"${statusStr}"`,
+                    `"${installedStr}"`,
+                    `"${receivedStr}"`,
                     `"${costsStr}"`
                 ];
                 csvContent += row.join(";") + "\n";
@@ -1072,182 +1171,190 @@
         filterAdapters();
     }
 
+    /* ==========================================================================
+       РЕНДЕР КАРТОЧЕК — заменена галочка на светящиеся кнопки
+       ========================================================================== */
     function renderApp() {
         applyTranslations();
         renderWarehouseInputs();
         const container = document.getElementById('categoriesContainer');
         container.innerHTML = '';
         const t = UI_TEXT[currentLang];
-        const currentRotation = getCurrentIncarnonRotation();
+        const rotation = getCurrentIncarnonRotation();
 
-        categoriesData.forEach(cat => {
+        categoriesData.forEach(catData => {
             const section = document.createElement('div');
             section.className = 'category-section';
-            section.id = `section_${cat.categoryKey}`;
-            const catTitle = t.categories[cat.categoryKey] || cat.categoryKey;
-            
-            let gridHtml = `<div class="adapter-grid">`;
-            cat.adapters.forEach(adapter => {
-                const isChecked = localStorage.getItem('incarnon_' + adapter.id) === 'true';
+            section.dataset.category = catData.categoryKey;
+
+            const catName = t.categories[catData.categoryKey];
+            const total = catData.adapters.length;
+            const installed = catData.adapters.filter(a => localStorage.getItem('incarnon_' + a.id) === 'true').length;
+
+            const h2 = document.createElement('h2');
+            h2.innerHTML = `${catName} <span style="font-size:0.7em; color:var(--text-muted);">${installed}/${total}</span>`;
+            section.appendChild(h2);
+
+            const grid = document.createElement('div');
+            grid.className = 'adapter-grid';
+
+            catData.adapters.forEach(adapter => {
+                const isInstalled = localStorage.getItem('incarnon_' + adapter.id) === 'true';
+                const isReceived = localStorage.getItem('incarnon_recv_' + adapter.id) === 'true';
+                const isCurrentWeek = rotation.adapters.includes(adapter.id);
+                const bothActive = isInstalled && isReceived;
+
+                const card = document.createElement('div');
+                let cardClasses = 'adapter-card';
+                if (bothActive) cardClasses += ' both-active';
+                else if (isInstalled) cardClasses += ' completed';
+                if (isCurrentWeek) cardClasses += ' current-week';
+                card.className = cardClasses;
+                card.dataset.id = adapter.id;
+                card.dataset.currentWeek = isCurrentWeek;
+
                 const weaponName = currentLang === 'en' ? adapter.nameEn : adapter.nameRu;
-                const isCurrentWeek = currentRotation.adapters.includes(adapter.id);
-                
-                let costsList = '';
+
+                let costHtml = '';
                 for (let [resKey, amount] of Object.entries(adapter.costs)) {
                     const res = RESOURCE_NAMES[resKey] || { nameRu: resKey, nameEn: resKey, img: '' };
                     const resName = currentLang === 'en' ? res.nameEn : res.nameRu;
-                    costsList += `
-                        <li>
-                            <div class="li-res-left">
-                                <img src="${res.img}" class="list-icon" alt="">
-                                <span>${resName}:</span>
-                            </div>
-                            <strong>${amount.toLocaleString()}</strong>
-                        </li>`;
+                    costHtml += `<li><div class="li-res-left"><img class="list-icon" src="${res.img}" alt="">${resName}</div><span>${amount}</span></li>`;
                 }
 
-                gridHtml += `
-                    <div class="adapter-card ${isChecked ? 'completed' : ''} ${isCurrentWeek ? 'current-week' : ''}" id="card_${adapter.id}" data-name="${weaponName.toLowerCase()}" data-checked="${isChecked}" data-current="${isCurrentWeek}">
-                        <div class="adapter-content">
-                            <img src="${adapter.img}" class="weapon-img" alt="">
-                            <div class="adapter-details">
-                                <div class="adapter-header">
-                                    <span class="adapter-title">
-                                        ${weaponName}
-                                        ${isCurrentWeek ? `<span class="current-badge">${t.currentBadgeText}</span>` : ''}
-                                    </span>
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" ${isChecked ? 'checked' : ''} onchange="toggleAdapter('${adapter.id}')"> ${t.installed}
-                                    </label>
+                card.innerHTML = `
+                    <div class="adapter-content">
+                        <img class="weapon-img" src="${adapter.img}" alt="${weaponName}">
+                        <div class="adapter-details">
+                            <div class="adapter-header">
+                                <span class="adapter-title">${weaponName}${isCurrentWeek ? '<span class="current-badge">' + t.currentBadgeText + '</span>' : ''}</span>
+                                <div class="adapter-toggles">
+                                    <button class="glow-btn installed${isInstalled ? ' active' : ''}" onclick="toggleAdapter('${adapter.id}')" aria-pressed="${isInstalled}" aria-label="${t.installed}">
+                                        <span class="dot"></span>
+                                        <span>${t.installed}</span>
+                                    </button>
+                                    <button class="glow-btn received${isReceived ? ' active' : ''}" onclick="toggleReceived('${adapter.id}')" aria-pressed="${isReceived}" aria-label="${t.received}">
+                                        <span class="dot"></span>
+                                        <span>${t.received}</span>
+                                    </button>
                                 </div>
-                                <ul>
-                                    ${costsList}
-                                </ul>
                             </div>
+                            <ul>${costHtml}</ul>
                         </div>
                     </div>
                 `;
-            });
-            gridHtml += `</div>`;
 
-            section.innerHTML = `<h2><span>${catTitle}</span></h2>` + gridHtml;
+                grid.appendChild(card);
+            });
+
+            section.appendChild(grid);
             container.appendChild(section);
         });
 
         updateTotals();
+        updateProgress();
         filterAdapters();
     }
 
+    /* Переключение «Установлен» */
     function toggleAdapter(id) {
-        const checkbox = document.querySelector(`#card_${id} input[type="checkbox"]`);
-        const card = document.getElementById(`card_${id}`);
-        
-        card.classList.remove('bounce');
-        void card.offsetWidth; 
-        card.classList.add('bounce');
-
-        if (checkbox.checked) {
-            localStorage.setItem('incarnon_' + id, 'true');
-            card.classList.add('completed');
-            card.setAttribute('data-checked', 'true');
-        } else {
-            localStorage.setItem('incarnon_' + id, 'false');
-            card.classList.remove('completed');
-            card.setAttribute('data-checked', 'false');
-        }
+        const current = localStorage.getItem('incarnon_' + id) === 'true';
+        const newVal = !current;
+        localStorage.setItem('incarnon_' + id, newVal ? 'true' : 'false');
         saveState();
+
+        const card = document.querySelector(`.adapter-card[data-id="${id}"]`);
+        if (card) {
+            const btn = card.querySelector('.glow-btn.installed');
+            btn.classList.toggle('active', newVal);
+            btn.setAttribute('aria-pressed', newVal);
+
+            updateCardClasses(card, id);
+
+            card.classList.add('bounce');
+            setTimeout(() => card.classList.remove('bounce'), 300);
+        }
+
+        updateCategoryCounts();
         updateTotals();
-        updateGlobalProgress();
-        filterAdapters();
+        updateProgress();
     }
 
-    function resetAllWithConfirm() {
+    /* Переключение «Получен» */
+    function toggleReceived(id) {
+        const current = localStorage.getItem('incarnon_recv_' + id) === 'true';
+        const newVal = !current;
+        localStorage.setItem('incarnon_recv_' + id, newVal ? 'true' : 'false');
+        saveState();
+
+        const card = document.querySelector(`.adapter-card[data-id="${id}"]`);
+        if (card) {
+            const btn = card.querySelector('.glow-btn.received');
+            btn.classList.toggle('active', newVal);
+            btn.setAttribute('aria-pressed', newVal);
+
+            updateCardClasses(card, id);
+
+            card.classList.add('bounce');
+            setTimeout(() => card.classList.remove('bounce'), 300);
+        }
+
+        updateTotals();
+        updateProgress();
+    }
+
+    /* Обновление классов карточки (completed / both-active) */
+    function updateCardClasses(card, id) {
+        const isInstalled = localStorage.getItem('incarnon_' + id) === 'true';
+        const isReceived = localStorage.getItem('incarnon_recv_' + id) === 'true';
+        const bothActive = isInstalled && isReceived;
+
+        card.classList.remove('completed', 'both-active');
+
+        if (bothActive) {
+            card.classList.add('both-active');
+        } else if (isInstalled) {
+            card.classList.add('completed');
+        }
+    }
+
+    /* Обновление счётчиков в заголовках категорий */
+    function updateCategoryCounts() {
         const t = UI_TEXT[currentLang];
-        if (confirm(t.confirmResetAll)) {
-            categoriesData.forEach(cat => {
-                cat.adapters.forEach(adapter => {
-                    localStorage.setItem('incarnon_' + adapter.id, 'false');
-                });
-            });
-            saveState();
-            renderApp();
-        }
-    }
-
-    function filterAdapters() {
-        const query = document.getElementById('searchInput').value.toLowerCase().trim();
-        const status = document.getElementById('statusFilter').value;
-        const searchResetInline = document.getElementById('searchResetInline');
-
-        if (query.length > 0 || status !== 'all') {
-            searchResetInline.style.display = 'block';
-        } else {
-            searchResetInline.style.display = 'none';
-        }
-
-        let totalVisibleCardsAll = 0;
-
-        categoriesData.forEach(cat => {
-            const section = document.getElementById(`section_${cat.categoryKey}`);
-            const cards = section.querySelectorAll('.adapter-card');
-            let visibleCountInCategory = 0;
-
-            cards.forEach(card => {
-                const name = card.getAttribute('data-name');
-                const isChecked = card.getAttribute('data-checked') === 'true';
-                const isCurrent = card.getAttribute('data-current') === 'true';
-
-                let matchesSearch = name.includes(query);
-                let matchesStatus = true;
-
-                if (status === 'uninstalled') matchesStatus = !isChecked;
-                if (status === 'installed') matchesStatus = isChecked;
-                if (status === 'current') matchesStatus = isCurrent;
-
-                if (matchesSearch && matchesStatus) {
-                    card.classList.remove('hidden');
-                    visibleCountInCategory++;
-                } else {
-                    card.classList.add('hidden');
-                }
-            });
-
-            if (visibleCountInCategory === 0) {
-                section.classList.add('hidden');
-            } else {
-                section.classList.remove('hidden');
-                totalVisibleCardsAll += visibleCountInCategory;
-            }
+        categoriesData.forEach(catData => {
+            const section = document.querySelector(`.category-section[data-category="${catData.categoryKey}"]`);
+            if (!section) return;
+            const catName = t.categories[catData.categoryKey];
+            const total = catData.adapters.length;
+            const installed = catData.adapters.filter(a => localStorage.getItem('incarnon_' + a.id) === 'true').length;
+            const h2 = section.querySelector('h2');
+            if (h2) h2.innerHTML = `${catName} <span style="font-size:0.7em; color:var(--text-muted);">${installed}/${total}</span>`;
         });
     }
 
-    function updateGlobalProgress() {
+    /* Прогресс-бар */
+    function updateProgress() {
         const ids = getAllAdapterIds();
-        let total = ids.length;
-        let completed = 0;
+        const total = ids.length;
+        const installed = ids.filter(id => localStorage.getItem('incarnon_' + id) === 'true').length;
+        const pct = total > 0 ? Math.round(installed / total * 100) : 0;
 
-        ids.forEach(id => {
-            if (localStorage.getItem('incarnon_' + id) === 'true') {
-                completed++;
-            }
-        });
-
-        const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
-        const t = currentLang === 'en' ? `Installed: ${completed} of ${total} (${percent}%)` : `Установлено: ${completed} из ${total} (${percent}%)`;
-
-        document.getElementById('progressText').innerText = t;
-        document.getElementById('progressPercent').innerText = percent + '%';
-        document.getElementById('progressFill').style.width = percent + '%';
+        document.getElementById('progressText').innerText = `${UI_TEXT[currentLang].installed}: ${installed} ${currentLang === 'ru' ? 'из' : 'of'} ${total} (${pct}%)`;
+        document.getElementById('progressPercent').innerText = pct + '%';
+        document.getElementById('progressFill').style.width = pct + '%';
     }
 
+    /* Обновление итогов ресурсов */
     function updateTotals() {
-        const totals = {};
-        Object.keys(RESOURCE_NAMES).forEach(key => { totals[key] = 0; });
+        const t = UI_TEXT[currentLang];
+        const container = document.getElementById('totalsContainer');
+        container.innerHTML = '';
 
-        categoriesData.forEach(cat => {
-            cat.adapters.forEach(adapter => {
-                const isChecked = localStorage.getItem('incarnon_' + adapter.id) === 'true';
-                if (!isChecked) {
+        let totals = {};
+        categoriesData.forEach(catData => {
+            catData.adapters.forEach(adapter => {
+                const isInstalled = localStorage.getItem('incarnon_' + adapter.id) === 'true';
+                if (!isInstalled) {
                     for (let [resKey, amount] of Object.entries(adapter.costs)) {
                         totals[resKey] = (totals[resKey] || 0) + amount;
                     }
@@ -1255,66 +1362,103 @@
             });
         });
 
-        const totalsContainer = document.getElementById('totalsContainer');
-        totalsContainer.innerHTML = '';
+        Object.keys(RESOURCE_NAMES).forEach(resKey => {
+            const res = RESOURCE_NAMES[resKey];
+            const total = totals[resKey] || 0;
+            if (total === 0) return;
 
-        const t = UI_TEXT[currentLang];
+            const stock = parseInt(localStorage.getItem('warehouse_' + resKey)) || 0;
+            const deficit = Math.max(0, total - stock);
+            const resName = currentLang === 'en' ? res.nameEn : res.nameRu;
 
-        for (let [resKey, totalAmount] of Object.entries(totals)) {
-            if (totalAmount > 0) {
-                const res = RESOURCE_NAMES[resKey] || { nameRu: resKey, nameEn: resKey, img: '' };
-                const resName = currentLang === 'en' ? res.nameEn : res.nameRu;
-                const stock = parseInt(localStorage.getItem('warehouse_' + resKey)) || 0;
-                const deficit = Math.max(0, totalAmount - stock);
-
-                const item = document.createElement('div');
-                item.className = 'res-total-item';
-                
-                let countsHtml = `<span class="res-count-main">${deficit.toLocaleString()}</span>`;
-                if (stock > 0) {
-                    let subText = t.warehouseSub
-                        .replace('{total}', totalAmount.toLocaleString())
-                        .replace('{stock}', stock.toLocaleString());
-
-                    countsHtml = `
-                        <div class="res-counts">
-                            <div class="res-count-main" style="color: ${deficit === 0 ? '#4CAF50' : 'var(--accent)'}">${deficit === 0 ? t.warehouseEnough : deficit.toLocaleString()}</div>
-                            <div class="res-count-sub">${subText}</div>
-                        </div>
-                    `;
-                }
-
-                item.innerHTML = `
-                    <div class="res-info-wrapper">
-                        <img src="${res.img}" class="res-icon" alt="">
-                        <span class="res-name">${resName}</span>
-                    </div>
-                    ${countsHtml}
-                `;
-                totalsContainer.appendChild(item);
-            }
-        }
-        updateGlobalProgress();
+            const div = document.createElement('div');
+            div.className = 'res-total-item';
+            div.innerHTML = `
+                <div class="res-info-wrapper">
+                    <img class="res-icon" src="${res.img}" alt="">
+                    <span class="res-name">${resName}</span>
+                </div>
+                <div class="res-counts">
+                    <div class="res-count-main">${deficit}</div>
+                    <div class="res-count-sub">${t.warehouseSub.replace('{total}', total).replace('{stock}', stock)}</div>
+                </div>
+            `;
+            container.appendChild(div);
+        });
     }
 
-    window.addEventListener('scroll', () => {
-        const topBtn = document.getElementById('backToTopBtn');
-        if (window.scrollY > 300) {
-            topBtn.classList.add('visible');
-        } else {
-            topBtn.classList.remove('visible');
-        }
-    });
+    /* Фильтрация адаптеров */
+    function filterAdapters() {
+        const searchVal = document.getElementById('searchInput').value.toLowerCase().trim();
+        const statusFilter = document.getElementById('statusFilter').value;
+        const rotation = getCurrentIncarnonRotation();
 
+        let hasVisible = { primary: false, secondary: false, melee: false };
+
+        document.querySelectorAll('.adapter-card').forEach(card => {
+            const id = card.dataset.id;
+            const isInstalled = localStorage.getItem('incarnon_' + id) === 'true';
+            const isCurrentWeek = rotation.adapters.includes(id);
+
+            let adapterName = '';
+            categoriesData.forEach(cat => cat.adapters.forEach(a => {
+                if (a.id === id) adapterName = currentLang === 'en' ? a.nameEn : a.nameRu;
+            }));
+
+            let visible = true;
+
+            if (searchVal && !adapterName.toLowerCase().includes(searchVal)) {
+                visible = false;
+            }
+
+            if (statusFilter === 'uninstalled' && isInstalled) visible = false;
+            if (statusFilter === 'installed' && !isInstalled) visible = false;
+            if (statusFilter === 'current' && !isCurrentWeek) visible = false;
+
+            card.classList.toggle('hidden', !visible);
+
+            if (visible) {
+                const cat = card.closest('.category-section');
+                if (cat) hasVisible[cat.dataset.category] = true;
+            }
+        });
+
+        document.querySelectorAll('.category-section').forEach(section => {
+            const catKey = section.dataset.category;
+            section.classList.toggle('hidden', !hasVisible[catKey]);
+        });
+
+        const resetBtn = document.getElementById('searchResetInline');
+        resetBtn.style.display = (searchVal || statusFilter !== 'all') ? 'inline' : 'none';
+    }
+
+    /* Сброс всех галочек */
+    function resetAllWithConfirm() {
+        const t = UI_TEXT[currentLang];
+        if (confirm(t.confirmResetAll)) {
+            const ids = getAllAdapterIds();
+            ids.forEach(id => {
+                localStorage.setItem('incarnon_' + id, 'false');
+                localStorage.setItem('incarnon_recv_' + id, 'false');
+            });
+            saveState();
+            renderApp();
+        }
+    }
+
+    /* Наверх */
     function scrollToTop() {
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
 
-    window.onload = () => {
-        initSettings();
-        renderApp();
-    };
-</script>
+    window.addEventListener('scroll', () => {
+        const btn = document.getElementById('backToTopBtn');
+        btn.classList.toggle('visible', window.scrollY > 400);
+    });
 
+    /* Инициализация */
+    initSettings();
+    renderApp();
+</script>
 </body>
 </html>
